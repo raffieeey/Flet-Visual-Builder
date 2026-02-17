@@ -4,6 +4,7 @@ from src.models.widget_node import WidgetNode
 
 
 def walk(root: WidgetNode):
+    """Yield all nodes in the subtree rooted at *root* (depth-first)."""
     yield root
     for child in root.children:
         yield from walk(child)
@@ -23,7 +24,23 @@ def find_parent(root: WidgetNode, node_id: str) -> WidgetNode | None:
     return None
 
 
-def insert_child(parent: WidgetNode, child: WidgetNode, index: int | None = None, slot: str | None = None) -> None:
+def is_ancestor(root: WidgetNode, ancestor_id: str, descendant_id: str) -> bool:
+    """Return True if *ancestor_id* is a (strict) ancestor of *descendant_id*."""
+    ancestor = find_node(root, ancestor_id)
+    if not ancestor:
+        return False
+    for node in walk(ancestor):
+        if node.id == descendant_id and node.id != ancestor_id:
+            return True
+    return False
+
+
+def insert_child(
+    parent: WidgetNode,
+    child: WidgetNode,
+    index: int | None = None,
+    slot: str | None = None,
+) -> None:
     child.parent_id = parent.id
     child.slot = slot
     if index is None:
@@ -42,12 +59,26 @@ def delete_node(root: WidgetNode, node_id: str) -> bool:
     return True
 
 
-def move_node(root: WidgetNode, node_id: str, target_parent_id: str, index: int | None = None, slot: str | None = None) -> bool:
+def move_node(
+    root: WidgetNode,
+    node_id: str,
+    target_parent_id: str,
+    index: int | None = None,
+    slot: str | None = None,
+) -> bool:
+    """Move a node to a new parent.  Returns False if the move would create a
+    cycle (i.e. moving a node into its own descendant) or if any id is invalid.
+    """
     node = find_node(root, node_id)
     source_parent = find_parent(root, node_id)
     target_parent = find_node(root, target_parent_id)
     if not node or not source_parent or not target_parent:
         return False
+
+    # Prevent cycles: target must not be inside the subtree of node
+    if target_parent_id == node_id or is_ancestor(root, node_id, target_parent_id):
+        return False
+
     source_parent.children = [c for c in source_parent.children if c.id != node_id]
     _reindex(source_parent)
     insert_child(target_parent, node, index=index, slot=slot)
@@ -70,7 +101,12 @@ def reorder_sibling(root: WidgetNode, node_id: str, delta: int) -> bool:
     return True
 
 
-def wrap_node(root: WidgetNode, node_id: str, wrapper: WidgetNode, wrapper_slot: str = "content") -> bool:
+def wrap_node(
+    root: WidgetNode,
+    node_id: str,
+    wrapper: WidgetNode,
+    wrapper_slot: str = "content",
+) -> bool:
     parent = find_parent(root, node_id)
     node = find_node(root, node_id)
     if not parent or not node:
