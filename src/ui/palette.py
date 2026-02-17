@@ -47,7 +47,7 @@ def build_palette(on_add_widget: callable) -> ft.Control:
                 bgcolor=_CAT_COLORS.get(cat, "#f5f5f5"),
                 border_radius=8,
                 padding=ft.padding.all(4),
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment.CENTER,
                 on_click=lambda e, wt=wtype: on_add_widget(wt),
                 ink=True,
                 tooltip=f"Add {wtype}",

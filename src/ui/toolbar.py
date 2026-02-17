@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import flet as ft
 
+_TAB_VALUES = ["design", "preview", "code"]
+_TAB_LABELS = ["Design", "Preview", "Code"]
+
 
 def build_toolbar(
     project_name: str,
@@ -16,6 +19,14 @@ def build_toolbar(
     can_redo: bool,
 ) -> ft.Control:
     """Build the top toolbar."""
+
+    def _handle_tab(e):
+        selected = e.control.selected
+        if selected:
+            val = selected[0] if isinstance(selected, list) else list(selected)[0]
+            idx = _TAB_VALUES.index(val) if val in _TAB_VALUES else 0
+            on_tab_change(idx)
+
     return ft.Container(
         content=ft.Row(
             controls=[
@@ -36,18 +47,15 @@ def build_toolbar(
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 ft.Container(expand=True),
-                # View tabs
-                ft.Tabs(
-                    selected_index=current_tab,
-                    on_change=lambda e: on_tab_change(e.control.selected_index),
-                    tabs=[
-                        ft.Tab(text="Design"),
-                        ft.Tab(text="Preview"),
-                        ft.Tab(text="Code"),
+                # View switcher
+                ft.SegmentedButton(
+                    segments=[
+                        ft.Segment(value=v, label=l)
+                        for v, l in zip(_TAB_VALUES, _TAB_LABELS)
                     ],
-                    height=42,
-                    label_color="#1976d2",
-                    unselected_label_color="#757575",
+                    selected=[_TAB_VALUES[current_tab]],
+                    show_selected_icon=False,
+                    on_change=_handle_tab,
                 ),
                 ft.Container(expand=True),
                 # Actions
@@ -84,7 +92,7 @@ def build_toolbar(
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
         height=50,
-        padding=ft.padding.symmetric(horizontal=12),
+        padding=ft.Padding(12, 0, 12, 0),
         bgcolor="#ffffff",
-        border=ft.border.only(bottom=ft.BorderSide(1, "#e0e0e0")),
+        border=ft.Border.only(bottom=ft.BorderSide(1, "#e0e0e0")),
     )
