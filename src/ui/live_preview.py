@@ -50,7 +50,7 @@ def build_live_preview(root: WidgetNode, theme: str = "light") -> ft.Control:
                 ft.Divider(height=1),
                 ft.Container(
                     content=phone_frame,
-                    alignment=ft.alignment.top_center,
+                    alignment=ft.Alignment.TOP_CENTER,
                     expand=True,
                     padding=ft.padding.only(top=10),
                 ),
