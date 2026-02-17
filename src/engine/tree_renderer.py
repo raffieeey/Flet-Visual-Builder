@@ -8,6 +8,7 @@ import flet as ft
 from src.models.enum_map import ENUM_MAP
 from src.models.widget_node import WidgetNode
 from src.models.widget_registry import WIDGET_REGISTRY, enum_key_for
+from src.utils.icons import resolve_icon
 
 FLET_CLASS_MAP: dict[str, type] = {
     "Text": ft.Text,
@@ -79,4 +80,7 @@ class TreeRenderer:
             mapped = ENUM_MAP.get(ek, {}).get(value)
             if mapped:
                 return _resolve_flet_constant(mapped)
+        if (widget_type, prop) in {("Icon", "name"), ("IconButton", "icon"), ("ElevatedButton", "icon")}:
+            return resolve_icon(value)
+
         return value

@@ -4,6 +4,7 @@ from __future__ import annotations
 import flet as ft
 
 from src.models.widget_registry import WIDGET_REGISTRY
+from src.utils.icons import resolve_icon
 
 
 # Category colors for visual grouping
@@ -31,7 +32,7 @@ def build_palette(on_add_widget: callable) -> ft.Control:
     for cat, widgets in categories.items():
         tiles = []
         for wtype, spec in widgets:
-            icon_name = spec.get("icon", "widgets")
+            icon_name = resolve_icon(spec.get("icon", "widgets"))
             tile = ft.Container(
                 content=ft.Column(
                     controls=[
