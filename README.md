@@ -2,6 +2,13 @@
 
 Flet Visual Builder (FVB) is a drag-and-drop UI builder for Flet apps.
 
+> ⚠️ **Disclaimer:** This project is currently experimental and can be **very buggy**.  
+> Some widgets and preview behavior may break depending on the installed Flet version.
+>
+> ⚠️ **Vibe Code Alert:** This project was 99% vibe coded as a fun long weekend hack.
+
+
+
 ## Current MVP foundation
 
 This repository includes the core architecture required by the TDD:
@@ -28,6 +35,15 @@ python main.py
 ```bash
 pytest -q
 ```
+
+### Design tab
+![Design tab](docs/screenshots/design_tab.png)
+
+### Preview tab
+![Preview tab](docs/screenshots/preview_tab.png)
+
+### Code tab
+![Code tab](docs/screenshots/code_tab.png)
 
 ## Changelog (from Codex baseline)
 
