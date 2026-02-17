@@ -1,0 +1,53 @@
+ENUM_MAP = {
+    "weight": {
+        "normal": "ft.FontWeight.NORMAL",
+        "bold": "ft.FontWeight.BOLD",
+        "w100": "ft.FontWeight.W_100",
+        "w200": "ft.FontWeight.W_200",
+        "w300": "ft.FontWeight.W_300",
+        "w400": "ft.FontWeight.W_400",
+        "w500": "ft.FontWeight.W_500",
+        "w600": "ft.FontWeight.W_600",
+        "w700": "ft.FontWeight.W_700",
+        "w800": "ft.FontWeight.W_800",
+        "w900": "ft.FontWeight.W_900",
+    },
+    "alignment": {
+        "start": "ft.MainAxisAlignment.START",
+        "center": "ft.MainAxisAlignment.CENTER",
+        "end": "ft.MainAxisAlignment.END",
+        "spaceBetween": "ft.MainAxisAlignment.SPACE_BETWEEN",
+        "spaceAround": "ft.MainAxisAlignment.SPACE_AROUND",
+        "spaceEvenly": "ft.MainAxisAlignment.SPACE_EVENLY",
+    },
+    "horizontal_alignment": {
+        "start": "ft.CrossAxisAlignment.START",
+        "center": "ft.CrossAxisAlignment.CENTER",
+        "end": "ft.CrossAxisAlignment.END",
+        "stretch": "ft.CrossAxisAlignment.STRETCH",
+    },
+    "vertical_alignment": {
+        "start": "ft.CrossAxisAlignment.START",
+        "center": "ft.CrossAxisAlignment.CENTER",
+        "end": "ft.CrossAxisAlignment.END",
+        "stretch": "ft.CrossAxisAlignment.STRETCH",
+    },
+
+    "container_alignment": {
+        "center": "ft.alignment.center",
+        "topLeft": "ft.alignment.top_left",
+        "topCenter": "ft.alignment.top_center",
+        "topRight": "ft.alignment.top_right",
+        "centerLeft": "ft.alignment.center_left",
+        "centerRight": "ft.alignment.center_right",
+        "bottomLeft": "ft.alignment.bottom_left",
+        "bottomCenter": "ft.alignment.bottom_center",
+        "bottomRight": "ft.alignment.bottom_right",
+    },
+    "text_align": {
+        "left": "ft.TextAlign.LEFT",
+        "center": "ft.TextAlign.CENTER",
+        "right": "ft.TextAlign.RIGHT",
+        "justify": "ft.TextAlign.JUSTIFY",
+    },
+}
