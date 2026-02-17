@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import flet as ft
 
+from src.utils.icons import resolve_icon
+
 _TAB_VALUES = ["design", "preview", "code"]
 _TAB_LABELS = ["Design", "Preview", "Code"]
 
@@ -33,7 +35,7 @@ def build_toolbar(
                 # Logo / project name
                 ft.Row(
                     controls=[
-                        ft.Icon("dashboard_customize", color="#1976d2", size=24),
+                        ft.Icon(resolve_icon("dashboard_customize"), color="#1976d2", size=24),
                         ft.Text(
                             "FVB",
                             size=18,
@@ -62,25 +64,25 @@ def build_toolbar(
                 ft.Row(
                     controls=[
                         ft.IconButton(
-                            icon="undo", tooltip="Undo (Ctrl+Z)",
+                            icon=resolve_icon("undo"), tooltip="Undo (Ctrl+Z)",
                             on_click=lambda e: on_undo(),
                             disabled=not can_undo,
                             icon_size=20,
                         ),
                         ft.IconButton(
-                            icon="redo", tooltip="Redo (Ctrl+Y)",
+                            icon=resolve_icon("redo"), tooltip="Redo (Ctrl+Y)",
                             on_click=lambda e: on_redo(),
                             disabled=not can_redo,
                             icon_size=20,
                         ),
                         ft.VerticalDivider(width=1),
                         ft.IconButton(
-                            icon="folder_open", tooltip="Load project",
+                            icon=resolve_icon("folder_open"), tooltip="Load project",
                             on_click=lambda e: on_load(),
                             icon_size=20,
                         ),
                         ft.IconButton(
-                            icon="save", tooltip="Save project",
+                            icon=resolve_icon("save"), tooltip="Save project",
                             on_click=lambda e: on_save(),
                             icon_size=20,
                         ),

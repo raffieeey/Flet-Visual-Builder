@@ -5,6 +5,7 @@ import flet as ft
 
 from src.models.widget_node import WidgetNode
 from src.models.widget_registry import WIDGET_REGISTRY
+from src.utils.icons import resolve_icon
 
 
 def build_tree_view(
@@ -26,7 +27,7 @@ def build_tree_view(
                         "expand_more" if has_children else "remove",
                         size=14, color="#9e9e9e",
                     ),
-                    ft.Icon(icon_name, size=14, color="#616161"),
+                    ft.Icon(resolve_icon(icon_name), size=14, color="#616161"),
                     ft.Text(
                         node.type, size=12,
                         weight=ft.FontWeight.BOLD if is_selected else ft.FontWeight.NORMAL,
