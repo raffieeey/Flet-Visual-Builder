@@ -51,6 +51,13 @@ class TreeRenderer:
                 continue  # skip event handlers in preview
             props[k] = self._resolve_prop(node.type, k, v)
 
+        # Flet Button API compatibility:
+        # newer versions can reject `text=` in favor of content-based buttons.
+        if node.type == "ElevatedButton" and "text" in props and "content" not in props:
+            label = props.pop("text")
+            if label is not None:
+                props["content"] = ft.Text(str(label))
+
         control = cls(**props)
 
         # Apply children respecting slot definitions from the registry
