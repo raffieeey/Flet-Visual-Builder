@@ -5,6 +5,7 @@ import flet as ft
 
 from src.models.widget_node import WidgetNode
 from src.models.widget_registry import WIDGET_REGISTRY, accepts_children
+from src.utils.icons import resolve_icon
 
 
 # Nesting depth colors
@@ -75,7 +76,7 @@ def build_canvas(
         # The node block itself
         header = ft.Row(
             controls=[
-                ft.Icon(icon_name, size=14, color="#616161"),
+                ft.Icon(resolve_icon(icon_name), size=14, color="#616161"),
                 ft.Text(
                     _label_for(node), size=12,
                     weight=ft.FontWeight.BOLD if is_layout else ft.FontWeight.NORMAL,
@@ -123,27 +124,27 @@ def build_canvas(
     action_bar = ft.Row(
         controls=[
             ft.IconButton(
-                icon="arrow_upward", icon_size=18, tooltip="Move up",
+                icon=resolve_icon("arrow_upward"), icon_size=18, tooltip="Move up",
                 on_click=lambda e: on_move_up(),
             ),
             ft.IconButton(
-                icon="arrow_downward", icon_size=18, tooltip="Move down",
+                icon=resolve_icon("arrow_downward"), icon_size=18, tooltip="Move down",
                 on_click=lambda e: on_move_down(),
             ),
             ft.IconButton(
-                icon="crop_square", icon_size=18, tooltip="Wrap in Container",
+                icon=resolve_icon("crop_square"), icon_size=18, tooltip="Wrap in Container",
                 on_click=lambda e: on_wrap("Container"),
             ),
             ft.IconButton(
-                icon="view_agenda", icon_size=18, tooltip="Wrap in Column",
+                icon=resolve_icon("view_agenda"), icon_size=18, tooltip="Wrap in Column",
                 on_click=lambda e: on_wrap("Column"),
             ),
             ft.IconButton(
-                icon="view_week", icon_size=18, tooltip="Wrap in Row",
+                icon=resolve_icon("view_week"), icon_size=18, tooltip="Wrap in Row",
                 on_click=lambda e: on_wrap("Row"),
             ),
             ft.IconButton(
-                icon="delete_outline", icon_size=18, tooltip="Delete",
+                icon=resolve_icon("delete_outline"), icon_size=18, tooltip="Delete",
                 icon_color="#d32f2f",
                 on_click=lambda e: on_delete(),
             ),

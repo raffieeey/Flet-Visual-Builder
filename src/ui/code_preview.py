@@ -6,6 +6,7 @@ import flet as ft
 from src.engine.code_generator import generate_code
 from src.engine.validator import ValidationError, validate_tree
 from src.models.widget_node import WidgetNode
+from src.utils.icons import resolve_icon
 
 
 def build_code_preview(
@@ -26,7 +27,7 @@ def build_code_preview(
     error_banner = ft.Container(
         content=ft.Row(
             controls=[
-                ft.Icon("warning_amber", color="#e65100", size=16),
+                ft.Icon(resolve_icon("warning_amber"), color="#e65100", size=16),
                 ft.Text(error_msg, size=11, color="#e65100", expand=True),
             ],
             spacing=6,
@@ -57,13 +58,13 @@ def build_code_preview(
                         ft.Container(expand=True),
                         ft.ElevatedButton(
                             "Copy",
-                            icon="content_copy",
+                            icon=resolve_icon("content_copy"),
                             on_click=lambda e: on_copy(code),
                             height=32,
                         ),
                         ft.ElevatedButton(
                             "Export .py",
-                            icon="download",
+                            icon=resolve_icon("download"),
                             on_click=lambda e: on_export(code),
                             height=32,
                             color="white",
