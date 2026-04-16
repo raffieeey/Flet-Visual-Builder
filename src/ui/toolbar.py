@@ -1,6 +1,8 @@
 """Toolbar — top action bar for the builder."""
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import flet as ft
 
 from src.utils.icons import resolve_icon
@@ -11,11 +13,11 @@ _TAB_LABELS = ["Design", "Preview", "Code"]
 
 def build_toolbar(
     project_name: str,
-    on_undo: callable,
-    on_redo: callable,
-    on_save: callable,
-    on_load: callable,
-    on_tab_change: callable,
+    on_undo: Callable,
+    on_redo: Callable,
+    on_save: Callable,
+    on_load: Callable,
+    on_tab_change: Callable,
     current_tab: int,
     can_undo: bool,
     can_redo: bool,

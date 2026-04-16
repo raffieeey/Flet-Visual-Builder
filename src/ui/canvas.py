@@ -1,6 +1,8 @@
 """Canvas panel — interactive tree-based design surface."""
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import flet as ft
 
 from src.models.widget_node import WidgetNode
@@ -35,11 +37,11 @@ def _label_for(node: WidgetNode) -> str:
 def build_canvas(
     root: WidgetNode,
     selected_id: str | None,
-    on_select: callable,
-    on_delete: callable,
-    on_move_up: callable,
-    on_move_down: callable,
-    on_wrap: callable,
+    on_select: Callable,
+    on_delete: Callable,
+    on_move_up: Callable,
+    on_move_down: Callable,
+    on_wrap: Callable,
 ) -> ft.Control:
     """Build the canvas panel showing widget tree as interactive blocks."""
 

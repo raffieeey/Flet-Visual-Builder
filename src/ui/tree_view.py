@@ -1,6 +1,8 @@
 """Tree View panel — hierarchical widget tree display."""
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import flet as ft
 
 from src.models.widget_node import WidgetNode
@@ -11,7 +13,7 @@ from src.utils.icons import resolve_icon
 def build_tree_view(
     root: WidgetNode,
     selected_id: str | None,
-    on_select: callable,
+    on_select: Callable,
 ) -> ft.Control:
     """Build a collapsible tree view of the widget hierarchy."""
 

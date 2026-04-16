@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 from src.models.widget_node import WidgetNode
@@ -94,7 +95,7 @@ def migrate_0_0_to_0_1(data: dict) -> dict:
     return data
 
 
-MIGRATIONS: dict[str, callable] = {
+MIGRATIONS: dict[str, Callable] = {
     "0.0": migrate_0_0_to_0_1,
 }
 

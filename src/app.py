@@ -9,7 +9,7 @@ from src.engine.tree_ops import (
 )
 from src.models.widget_node import WidgetNode
 from src.models.widget_registry import (
-    WIDGET_REGISTRY, accepts_children, default_slot, defaults_for,
+    accepts_children, default_slot, defaults_for,
 )
 from src.state.app_state import AppState
 from src.state.project_state import ProjectState

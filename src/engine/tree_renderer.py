@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import operator
 from functools import reduce
 
 import flet as ft
@@ -87,7 +86,9 @@ class TreeRenderer:
             mapped = ENUM_MAP.get(ek, {}).get(value)
             if mapped:
                 return _resolve_flet_constant(mapped)
-        if (widget_type, prop) in {("Icon", "name"), ("IconButton", "icon"), ("ElevatedButton", "icon")}:
+        if (widget_type, prop) in {
+            ("Icon", "name"), ("IconButton", "icon"), ("ElevatedButton", "icon"),
+        }:
             return resolve_icon(value)
 
         return value

@@ -1,6 +1,8 @@
 """Widget Palette panel — displays available widgets grouped by category."""
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import flet as ft
 
 from src.models.widget_registry import WIDGET_REGISTRY
@@ -16,7 +18,7 @@ _CAT_COLORS = {
 }
 
 
-def build_palette(on_add_widget: callable) -> ft.Control:
+def build_palette(on_add_widget: Callable) -> ft.Control:
     """Build the widget palette panel.
 
     Args:

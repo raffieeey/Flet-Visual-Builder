@@ -1,6 +1,8 @@
 """Code Preview panel — shows generated Flet Python code."""
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import flet as ft
 
 from src.engine.code_generator import generate_code
@@ -11,8 +13,8 @@ from src.utils.icons import resolve_icon
 
 def build_code_preview(
     root: WidgetNode,
-    on_copy: callable,
-    on_export: callable,
+    on_copy: Callable,
+    on_export: Callable,
 ) -> ft.Control:
     """Build the code preview panel."""
     # Validate first
