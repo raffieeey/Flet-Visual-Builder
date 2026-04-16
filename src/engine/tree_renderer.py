@@ -87,7 +87,9 @@ class TreeRenderer:
             if mapped:
                 return _resolve_flet_constant(mapped)
         if (widget_type, prop) in {
-            ("Icon", "name"), ("IconButton", "icon"), ("ElevatedButton", "icon"),
+            ("Icon", "name"),
+            ("IconButton", "icon"),
+            ("ElevatedButton", "icon"),
         }:
             return resolve_icon(value)
 

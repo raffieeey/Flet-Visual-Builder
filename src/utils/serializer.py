@@ -95,7 +95,7 @@ def migrate_0_0_to_0_1(data: dict) -> dict:
     return data
 
 
-MIGRATIONS: dict[str, Callable] = {
+MIGRATIONS: dict[str, Callable[[dict], dict]] = {
     "0.0": migrate_0_0_to_0_1,
 }
 
