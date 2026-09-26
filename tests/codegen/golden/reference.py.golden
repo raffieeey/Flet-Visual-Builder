@@ -1,0 +1,93 @@
+"""Flet Visual Builder export. Target: 1.0.1."""
+
+from collections.abc import Callable
+
+import flet as ft
+
+
+def build_ui(
+    handle_reset_click: Callable[[ft.Event[ft.TextButton]], None],
+    handle_save_click: Callable[[ft.Event[ft.Button]], None],
+) -> ft.Control:
+    return ft.Container(
+        width=640,
+        padding=ft.Padding.all(20),
+        alignment=ft.Alignment.TOP_LEFT,
+        border=ft.Border.all(width=1, color=ft.Colors.BLACK_12),
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            spacing=16,
+            controls=[
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                    spacing=12,
+                    controls=[
+                        ft.Icon(icon=ft.Icons.PERSON, color=ft.Colors.INDIGO),
+                        ft.Text(
+                            value="Profile settings",
+                            size=24,
+                            weight=ft.FontWeight.W_600,
+                        ),
+                    ],
+                ),
+                ft.Card(
+                    content=ft.Container(
+                        padding=ft.Padding.all(16),
+                        content=ft.Column(
+                            alignment=ft.MainAxisAlignment.START,
+                            horizontal_alignment=ft.CrossAxisAlignment.START,
+                            spacing=12,
+                            controls=[
+                                ft.TextField(
+                                    label="Display name",
+                                    value="",
+                                    border=ft.OutlineInputBorder(),
+                                ),
+                                ft.Checkbox(label="Receive notifications", value=True),
+                                ft.Switch(label="Profile enabled", value=True),
+                            ],
+                        ),
+                    )
+                ),
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.END,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                    controls=[
+                        ft.TextButton(content="Reset", on_click=handle_reset_click),
+                        ft.Button(
+                            content="Save",
+                            icon=ft.Icons.SAVE,
+                            on_click=handle_save_click,
+                        ),
+                    ],
+                ),
+                ft.Divider(),
+                ft.Text(value="Ready", color=ft.Colors.INDIGO),
+            ],
+        ),
+    )
+
+
+def main(page: ft.Page) -> None:
+    page.title = "Profile settings"
+    page.padding = ft.Padding.all(24)
+    page.scroll = ft.ScrollMode.AUTO
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
+    page.appbar = ft.AppBar(title=ft.Text(value="Generated Flet application"))
+
+    def handle_reset_click(e: ft.Event[ft.TextButton]) -> None:
+        # Add application behavior in the exported application.
+        pass
+
+    def handle_save_click(e: ft.Event[ft.Button]) -> None:
+        # Add application behavior in the exported application.
+        pass
+
+    page.add(build_ui(handle_reset_click, handle_save_click))
+
+
+if __name__ == "__main__":
+    ft.run(main)
