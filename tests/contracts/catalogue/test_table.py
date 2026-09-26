@@ -1,0 +1,68 @@
+"""Every key/default/slot/event in TDD v2 §2.4 is implemented exactly."""
+from __future__ import annotations
+
+import pytest
+
+from src.flet_visual_builder.catalogue import catalogue
+from src.flet_visual_builder.contracts import Unset
+
+from tests.contracts.catalogue.expected import (
+    WIDGET_EVENTS,
+    WIDGET_ORDER,
+    WIDGET_SLOTS,
+    expected_props,
+)
+
+
+def test_sixteen_widgets_in_normative_order() -> None:
+    assert tuple(catalogue.widgets) == WIDGET_ORDER
+    assert len(catalogue.widgets) == 16
+    assert catalogue.version == 1
+    assert catalogue.target_flet == "1.0.1"
+
+
+@pytest.mark.parametrize("type_id", WIDGET_ORDER)
+def test_widget_properties_match_tdd_table(type_id: str) -> None:
+    spec = catalogue.widget(type_id)
+    expected = expected_props(type_id)
+    assert set(spec.properties) == set(expected)
+    for name, (codec_id, default, nullable) in expected.items():
+        prop = spec.properties[name]
+        assert prop.name == name
+        assert prop.codec_id == codec_id, name
+        assert prop.nullable is nullable, name
+        assert prop.new_default == default, name
+        if default is Unset.VALUE:
+            assert name not in catalogue.new_props(type_id)
+
+
+@pytest.mark.parametrize("type_id", WIDGET_ORDER)
+def test_widget_slots_match_tdd_table(type_id: str) -> None:
+    spec = catalogue.widget(type_id)
+    expected = WIDGET_SLOTS[type_id]
+    assert set(spec.slots) == set(expected)
+    for name, (minimum, maximum) in expected.items():
+        slot = spec.slots[name]
+        assert slot.name == name
+        assert slot.minimum == minimum
+        assert slot.maximum == maximum
+
+
+@pytest.mark.parametrize("type_id", WIDGET_ORDER)
+def test_widget_events_match_tdd_table(type_id: str) -> None:
+    spec = catalogue.widget(type_id)
+    assert spec.events == WIDGET_EVENTS[type_id]
+
+
+@pytest.mark.parametrize("type_id", WIDGET_ORDER)
+def test_constructor_is_ft_symbol(type_id: str) -> None:
+    spec = catalogue.widget(type_id)
+    assert spec.constructor.path == (type_id,)
+    assert spec.type_id == type_id
+
+
+def test_shared_properties_present_on_every_widget() -> None:
+    for type_id in WIDGET_ORDER:
+        props = catalogue.widget(type_id).properties
+        for name in ("width", "height", "expand", "disabled", "visible"):
+            assert name in props, f"{type_id} missing shared {name}"
