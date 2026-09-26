@@ -1,0 +1,41 @@
+{
+  "name": "Legacy example",
+  "schema_version": "0.0",
+  "tree": {
+    "id": "root",
+    "type": "Column",
+    "props": {
+      "alignment": "start",
+      "spacing": 10.0
+    },
+    "children": [
+      {
+        "id": "label",
+        "type": "Text",
+        "props": {
+          "value": "Hello",
+          "weight": "bold"
+        },
+        "children": [],
+        "parent_id": "root",
+        "order": 0,
+        "slot": "controls"
+      },
+      {
+        "id": "save",
+        "type": "ElevatedButton",
+        "props": {
+          "text": "Save",
+          "on_click": "on_save"
+        },
+        "children": [],
+        "parent_id": "root",
+        "order": 1,
+        "slot": "controls"
+      }
+    ],
+    "parent_id": null,
+    "order": 0,
+    "slot": null
+  }
+}
