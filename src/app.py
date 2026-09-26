@@ -52,6 +52,11 @@ def _show_snack(page: ft.Page, message: str, color: str = "#4caf50"):
     page.update()
 
 
+async def _set_clipboard(code: str) -> None:
+    """Construct the clipboard service inside the page context, then write."""
+    await ft.Clipboard().set(code)
+
+
 def main(page: ft.Page) -> None:
     page.title = "Flet Visual Builder"
     page.bgcolor = "#f0f0f0"
@@ -242,8 +247,7 @@ def main(page: ft.Page) -> None:
                           allowed_extensions=["json"])
 
     def do_copy_code(code: str):
-        page.clipboard = code
-        page.update()
+        page.run_task(_set_clipboard, code)
         _show_snack(page, "Code copied to clipboard!")
 
     def do_export_code(code: str):
@@ -279,4 +283,4 @@ def main(page: ft.Page) -> None:
 
 
 def run() -> None:
-    ft.app(target=main)
+    ft.run(main)

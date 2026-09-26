@@ -65,10 +65,10 @@ def build_canvas(
                         text_align=ft.TextAlign.CENTER,
                     ),
                     height=40,
-                    border=ft.border.all(1, "#e0e0e0"),
+                    border=ft.Border.all(1, "#e0e0e0"),
                     border_radius=4,
                     bgcolor="#fafafa",
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment.CENTER,
                     padding=4,
                 )
             )
@@ -106,9 +106,9 @@ def build_canvas(
 
         return ft.Container(
             content=block_content,
-            padding=ft.padding.only(left=10, right=8, top=6, bottom=6),
+            padding=ft.Padding.only(left=10, right=8, top=6, bottom=6),
             bgcolor=color if not is_selected else "#fff9c4",
-            border=ft.border.all(
+            border=ft.Border.all(
                 2 if is_selected else 1,
                 "#f57f17" if is_selected else "#bdbdbd",
             ),

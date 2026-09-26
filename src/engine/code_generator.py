@@ -123,7 +123,7 @@ def generate_code(root: WidgetNode) -> str:
         "    )",
         "",
         "",
-        "ft.app(target=main)",
+        "ft.run(main)",
     ])
 
     return "\n".join(lines)

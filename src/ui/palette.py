@@ -47,7 +47,7 @@ def build_palette(on_add_widget: callable) -> ft.Control:
                 height=60,
                 bgcolor=_CAT_COLORS.get(cat, "#f5f5f5"),
                 border_radius=8,
-                padding=ft.padding.all(4),
+                padding=ft.Padding.all(4),
                 alignment=ft.Alignment.CENTER,
                 on_click=lambda e, wt=wtype: on_add_widget(wt),
                 ink=True,
@@ -77,5 +77,5 @@ def build_palette(on_add_widget: callable) -> ft.Control:
         width=200,
         padding=10,
         bgcolor="#fafafa",
-        border=ft.border.only(right=ft.BorderSide(1, "#e0e0e0")),
+        border=ft.Border.only(right=ft.BorderSide(1, "#e0e0e0")),
     )

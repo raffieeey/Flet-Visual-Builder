@@ -10,13 +10,30 @@ from src.models.widget_node import WidgetNode
 from src.models.widget_registry import WIDGET_REGISTRY, enum_key_for
 from src.utils.icons import resolve_icon
 
+
+class FletCompatibilityError(RuntimeError):
+    """Installed Flet is missing a control class this builder still references."""
+
+
+def _flet_class(attr: str) -> type:
+    """Resolve a Flet control class, or fail with the missing type named."""
+    try:
+        return getattr(ft, attr)
+    except AttributeError:
+        version = getattr(ft, "__version__", "unknown")
+        raise FletCompatibilityError(
+            f"Flet {version} has no control {attr!r}. "
+            "This project requires flet==1.0.1."
+        ) from None
+
+
 FLET_CLASS_MAP: dict[str, type] = {
-    "Text": ft.Text,
-    "Container": ft.Container,
-    "Column": ft.Column,
-    "Row": ft.Row,
-    "ElevatedButton": ft.ElevatedButton,
-    "TextField": ft.TextField,
+    "Text": _flet_class("Text"),
+    "Container": _flet_class("Container"),
+    "Column": _flet_class("Column"),
+    "Row": _flet_class("Row"),
+    "ElevatedButton": _flet_class("Button"),
+    "TextField": _flet_class("TextField"),
 }
 
 

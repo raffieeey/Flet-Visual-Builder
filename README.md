@@ -2,8 +2,7 @@
 
 Flet Visual Builder (FVB) is a drag-and-drop UI builder for Flet apps.
 
-> ⚠️ **Disclaimer:** This project is currently experimental and can be **very buggy**.  
-> Some widgets and preview behavior may break depending on the installed Flet version.
+> ⚠️ **Disclaimer:** This project is currently experimental and can be **very buggy**.
 >
 > ⚠️ **Vibe Code Alert:** This project was 99% vibe coded as a fun long weekend hack.
 
@@ -21,19 +20,19 @@ This repository includes the core architecture required by the TDD:
 - Project serialization, migrations, save/load with auto-backup
 - App state with snapshot-based undo/redo
 - Canvas hit-test engine with drop-zone detection
-- Unit test suite (42 tests) covering all core engine modules
+- Unit test suite (10 tests) covering all core engine modules
 
 ## Run
 
 ```bash
-pip install -r requirements.txt
-python main.py
+uv sync --locked --extra dev
+uv run --locked --extra dev flet-visual-builder
 ```
 
 ## Test
 
 ```bash
-pytest -q
+uv run --locked --extra dev python -m pytest -q
 ```
 
 ### Design tab
@@ -62,4 +61,4 @@ pytest -q
 - **serializer: removed redundant asdict()** — `node_to_dict` now builds dicts manually instead of calling `dataclasses.asdict` then overwriting children
 - **hit_test: drop zone detection** — added `DropZone` enum (BEFORE/INSIDE/AFTER) based on TDD spec (top 25%/middle 50%/bottom 25%)
 - **hit_test: accepts_children flag** — leaf nodes fall back to AFTER when pointer is in the middle zone
-- **Test suite expanded** — 9 tests → 42 tests covering all bug fixes and edge cases
+- **Test suite** — 10 tests covering engine bug fixes, edge cases, and a Flet 1.0 removed-API guard

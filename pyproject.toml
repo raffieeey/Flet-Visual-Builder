@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools==77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flet-visual-builder"
+version = "0.1.0"
+description = "Drag-and-drop UI builder for Flet apps"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "flet==1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flet[test]==1.0.1",
+    "black==25.1.0",
+    "pytest>=7.2.0",
+    "pytest-asyncio>=1.1.0",
+    "uv",
+]
+
+[project.scripts]
+flet-visual-builder = "src.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"]

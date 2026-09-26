@@ -37,7 +37,7 @@ def build_tree_view(
                 spacing=4,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.only(left=depth * 16 + 4, top=3, bottom=3, right=4),
+            padding=ft.Padding.only(left=depth * 16 + 4, top=3, bottom=3, right=4),
             bgcolor="#e3f2fd" if is_selected else None,
             border_radius=4,
             on_click=lambda e, nid=node.id: on_select(nid),
@@ -61,5 +61,5 @@ def build_tree_view(
         ),
         padding=8,
         bgcolor="#fafafa",
-        border=ft.border.only(top=ft.BorderSide(1, "#e0e0e0")),
+        border=ft.Border.only(top=ft.BorderSide(1, "#e0e0e0")),
     )

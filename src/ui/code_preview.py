@@ -56,13 +56,13 @@ def build_code_preview(
                     controls=[
                         ft.Text("Code", size=16, weight=ft.FontWeight.BOLD),
                         ft.Container(expand=True),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Copy",
                             icon=resolve_icon("content_copy"),
                             on_click=lambda e: on_copy(code),
                             height=32,
                         ),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Export .py",
                             icon=resolve_icon("download"),
                             on_click=lambda e: on_export(code),
