@@ -1,0 +1,39 @@
+{
+  "target_flet": "1.0.1",
+  "contract_import": "passed",
+  "contract_ast_compile": "passed",
+  "event_symbol_checks": "passed",
+  "generated_source_ast_compile": "passed",
+  "flet_execution": "not run here; isolated install blocked by DNS",
+  "gui_interaction": "not run",
+  "formatter_execution": "not run; use pinned Black 25.1.0 in implementation",
+  "legacy_fixture": "synthetic fixture generated with the pinned serializer shape, not a recovered user document",
+  "ratified_by": {
+    "ticket": "T03",
+    "package": "src.flet_visual_builder.contracts",
+    "jsonschema": "not installed; v2 Project validation uses a hand-written structural check against src/flet_visual_builder/schema/project.schema.json (stdlib json only)",
+    "producer_claims_not_inherited_as_facts": [
+      "flet_execution",
+      "gui_interaction",
+      "formatter_execution",
+      "legacy_fixture origin"
+    ],
+    "notes": [
+      "Producer claim flet_execution='not run here; isolated install blocked by DNS' has since been closed by the orchestrator: the reference export constructs a real control tree on flet 1.0.1 without error. This ticket did not re-run that construction (headless AST parse of tests/contracts/fixtures/reference_export.py only).",
+      "This ticket did not run GUI interaction or Black formatting.",
+      "contracts.py was copied byte-identical from the TDD artifact (11621 bytes). No definition was changed.",
+      "Index comments were already present; no wording was added to contracts.py."
+    ],
+    "verified_here": {
+      "contract_import": "passed; flet not in sys.modules after import",
+      "command_adt_members": 10,
+      "project_defaults": {"schema_version": 2, "target_flet": "1.0.1", "catalogue_version": 1},
+      "event_symbol": "handle_save accepted; on_save, class, 1abc, handle_x; import os, handle_x\\nimport os rejected with ValueError",
+      "section_2_3_3_names": {"asserted": 69, "found": 69},
+      "legacy_fixture": "parses as JSON with schema_version == '0.1'; fails v2 schema (negative control)",
+      "reference_export": "ast.parse succeeds and source contains ft.run(main)",
+      "pytest_contracts": "23 passed",
+      "pytest_full_suite": "61 passed"
+    }
+  }
+}

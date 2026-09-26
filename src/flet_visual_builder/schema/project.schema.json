@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flet-visual-builder.local/schema/project.schema.json",
+  "title": "Flet Visual Builder Project v2",
+  "description": "JSON Schema for the v2 Project shape defined in contracts.py (Project, Node, Asset, EventSymbol).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "page",
+    "root_ids",
+    "nodes",
+    "assets",
+    "schema_version",
+    "catalogue_version",
+    "target_flet"
+  ],
+  "properties": {
+    "name": { "type": "string" },
+    "page": { "type": "object" },
+    "root_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/node" }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/asset" }
+    },
+    "schema_version": { "type": "integer", "const": 2 },
+    "catalogue_version": { "type": "integer", "const": 1 },
+    "target_flet": { "type": "string", "const": "1.0.1" }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type_id", "props", "slots", "events"],
+      "properties": {
+        "id": { "type": "string" },
+        "type_id": { "type": "string" },
+        "props": { "type": "object" },
+        "slots": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "events": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/event_symbol" }
+        }
+      }
+    },
+    "event_symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^handle_[A-Za-z0-9_]*$"
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "media_type", "sha256", "data"],
+      "properties": {
+        "id": { "type": "string" },
+        "media_type": { "type": "string" },
+        "sha256": { "type": "string" },
+        "data": { "type": "string" }
+      }
+    }
+  }
+}
