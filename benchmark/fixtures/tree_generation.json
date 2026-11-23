@@ -1,9 +1,0 @@
-{
-  "description": "Synthetic tree parameters used by src.engine.performance.build_tree",
-  "node_counts": [50, 250, 1000],
-  "root_type": "Column",
-  "child_type": "Column",
-  "child_slot": "controls",
-  "fanout": 8,
-  "id_scheme": "n0..n{node_count-1}"
-}
