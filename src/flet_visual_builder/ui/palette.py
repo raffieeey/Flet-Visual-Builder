@@ -149,6 +149,14 @@ class Palette(BasePanel):
             self._populate()
             self._update_items()
 
+    def _hover_row(self, event) -> None:
+        entered = event.data is True or str(event.data).lower() == "true"
+        event.control.bgcolor = T.hover_fill if entered else None
+        try:
+            event.control.update()
+        except RuntimeError:
+            pass
+
     def _search(self, event) -> None:
         self._populate()
         self._update_items()
@@ -207,14 +215,14 @@ class Palette(BasePanel):
                         max_lines=1,
                         overflow=ft.TextOverflow.ELLIPSIS,
                     ),
-                    ft.Icon(ft.Icons.ADD, size=13, color=T.text_faint),
                 ],
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.Padding(left=MD, top=6, right=MD, bottom=6),
+            padding=ft.Padding(left=MD, top=5, right=MD, bottom=5),
             border_radius=R_MD,
             on_click=lambda e, name=type_id: self._add(name),
+            on_hover=lambda e, control=None: self._hover_row(e),
             tooltip=f"Add {type_id} beside the current selection, or drag to the canvas",
         )
         return ft.Draggable(

@@ -235,18 +235,24 @@ class Inspector(BasePanel):
                 )
             )
         self._refresh_labels()
+        spaced: list[ft.Control] = []
+        for index, block in enumerate(sections):
+            if index:
+                spaced.append(ft.Container(height=1, bgcolor=T.border_soft))
+            spaced.append(block)
         return ft.Column(
             controls=[
                 ft.Container(
                     content=header,
-                    padding=MD,
+                    padding=ft.Padding(left=MD, top=10, right=MD, bottom=10),
+                    bgcolor=T.panel_alt,
                     border=ft.Border(
                         bottom=ft.BorderSide(width=1, color=T.border_soft)
                     ),
                 ),
                 ft.Container(
                     content=ft.Column(
-                        controls=sections,
+                        controls=spaced,
                         spacing=MD,
                         scroll=ft.ScrollMode.AUTO,
                         expand=True,

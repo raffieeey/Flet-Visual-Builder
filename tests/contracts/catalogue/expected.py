@@ -176,7 +176,13 @@ WIDGET_ORDER: tuple[str, ...] = (
 )
 
 
+#: Shared properties a widget cannot expose because its Flet constructor rejects them.
+PROP_EXCEPTIONS: dict[str, frozenset[str]] = {"Divider": frozenset({"width"})}
+
+
 def expected_props(type_id: str) -> dict[str, tuple[str, object, bool]]:
     merged = dict(SHARED_PROPS)
+    for name in PROP_EXCEPTIONS.get(type_id, frozenset()):
+        merged.pop(name, None)
     merged.update(WIDGET_PROPS[type_id])
     return merged

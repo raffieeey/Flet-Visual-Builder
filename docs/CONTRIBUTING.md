@@ -102,6 +102,27 @@ Add a builder to `services/templates.py` returning a `Project`, and register a `
 Use only catalogue widget types and declared property names. The template tests round-trip
 through the repository, lower, compile and render each template.
 
+## Visual verification
+
+Templates and the starter document are judged as rendered output, not as code. After changing
+a template, render it and look at the PNG:
+
+```bash
+python tools/shoot.py --template dashboard --out /tmp/dash.png --display :101
+python tools/shoot.py --project demo.fvb.json --out /tmp/demo.png
+```
+
+The harness lowers and generates the document, runs the exported `app.py` in a real Flet
+desktop client on a private X display, and captures the window. It needs `Xvfb` and `ffmpeg`.
+Layout rules that keep screens from looking stretched or half-empty:
+
+- bound the content column (about 900-1040 px) and centre it; let bands stay full-bleed and
+  align their inner content to the same column
+- short screens should centre vertically (`expand=True` plus a non-scrolling page)
+- use `expand` on row children instead of fixed widths, and never combine `expand` with
+  `wrap=True` on the same row
+- keep the spacing rhythm on the 4/8/12/16/24/32 scale and reserve the accent for actions
+
 ## Commands
 
 ```bash

@@ -70,7 +70,17 @@ Starlette releases removed.
 ![Template gallery](docs/screenshots/templates.png)
 
 New documents start from a template gallery. Each template is built from the same catalogue
-the editor exposes, so what you see is what you can edit.
+the editor exposes, so what you see is what you can edit. These are the exported apps, not
+mockups:
+
+| | |
+| --- | --- |
+| ![Login](docs/screenshots/template-login.png) | ![Dashboard](docs/screenshots/template-dashboard.png) |
+| **Login** — brand panel and a focused sign-in form | **Dashboard** — KPI row, activity and a weekly goal |
+| ![Settings](docs/screenshots/template-settings.png) | ![Profile](docs/screenshots/template-profile.png) |
+| **Settings** — grouped account and notification rows | **Profile** — identity header and selected work |
+| ![Onboarding](docs/screenshots/template-onboarding.png) | |
+| **Onboarding** — progress, team details, clear actions | |
 
 ## What the export looks like
 
@@ -154,7 +164,7 @@ More detail in [docs/architecture.md](docs/architecture.md).
 ## Development
 
 ```bash
-python -m pytest -q          # 576 tests
+python -m pytest -q          # 662 tests
 python -m black --check src tests
 ```
 

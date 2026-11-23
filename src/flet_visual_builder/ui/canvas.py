@@ -109,10 +109,11 @@ class Canvas(BasePanel):
             width=width,
             expand=width is None,
             bgcolor=T.panel,
-            border_radius=10,
+            border=ft.Border.all(1, T.border),
+            border_radius=12,
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             shadow=ft.BoxShadow(
-                blur_radius=24, spread_radius=0, color=T.shadow, offset=ft.Offset(0, 6)
+                blur_radius=32, spread_radius=0, color=T.shadow, offset=ft.Offset(0, 10)
             ),
         )
         return ft.Column(

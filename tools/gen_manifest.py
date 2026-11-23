@@ -30,7 +30,9 @@ def _colors() -> list[str]:
     missing = [n for n in _REQUIRED_COLORS if n not in names]
     leaked = [n for n in _FORBIDDEN_COLORS if n in names]
     if missing or leaked:
-        raise SystemExit(f"Colors allowlist failed checks: missing={missing} leaked={leaked}")
+        raise SystemExit(
+            f"Colors allowlist failed checks: missing={missing} leaked={leaked}"
+        )
     return names
 
 
@@ -56,7 +58,10 @@ def main() -> int:
         "icons": _icons(),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, separators=(",", ":"), ensure_ascii=True) + "\n", encoding="utf-8")
+    OUT.write_text(
+        json.dumps(payload, separators=(",", ":"), ensure_ascii=True) + "\n",
+        encoding="utf-8",
+    )
     print(f"wrote {OUT}")
     print(f"colors={len(payload['colors'])} icons={len(payload['icons'])}")
     return 0

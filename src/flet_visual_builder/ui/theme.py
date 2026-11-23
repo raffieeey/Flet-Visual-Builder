@@ -17,21 +17,21 @@ import flet as ft
 class Tokens:
     """Light workspace palette: quiet chrome, neutral canvas, indigo accent."""
 
-    bg: str = "#F4F5F7"
+    bg: str = "#F6F7F9"
     panel: str = "#FFFFFF"
     panel_alt: str = "#FAFBFC"
     rail: str = "#FBFBFC"
-    border: str = "#E3E6EA"
-    border_soft: str = "#EEF0F3"
+    border: str = "#E4E7EC"
+    border_soft: str = "#F0F2F5"
     border_strong: str = "#C9D1DA"
     text: str = "#17202A"
     text_muted: str = "#5B6B7B"
-    text_faint: str = "#8A97A6"
+    text_faint: str = "#78879A"
     accent: str = "#4F46E5"
     accent_hover: str = "#4338CA"
     accent_soft: str = "#EEF0FF"
     accent_border: str = "#C7CBFA"
-    canvas_bg: str = "#E9ECF1"
+    canvas_bg: str = "#E7EAEF"
     selection: str = "#4F46E5"
     hover: str = "#A5B4FC"
     drop: str = "#16A34A"
@@ -43,7 +43,8 @@ class Tokens:
     code_bg: str = "#0F172A"
     code_text: str = "#E2E8F0"
     code_muted: str = "#94A3B8"
-    shadow: str = "#12000000"
+    shadow: str = "#1A0B1220"
+    hover_fill: str = "#F1F3F6"
 
 
 T = Tokens()

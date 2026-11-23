@@ -48,41 +48,68 @@ def empty_project(name: str = "Untitled") -> Project:
 
 
 def starter_project() -> Project:
-    """A composed welcome screen: band, three steps, and a footer action row."""
-    ink = "#0F172A"
-    paper = "#FFFFFF"
-    accent = "#4F46E5"
-    accent_soft = "#EEF0FF"
-
+    """A welcoming, editable introduction to the visual builder."""
+    ink, paper, accent = "#0B1220", "#FFFFFF", "#4F46E5"
+    muted, canvas, border = "#475569", "#F6F7F9", "#E2E8F0"
     nodes: list[Node] = [
         _node(
             "Column",
             "root",
-            {"spacing": 0, "alignment": "START", "horizontal_alignment": "STRETCH"},
+            {
+                "spacing": 0,
+                "horizontal_alignment": "STRETCH",
+                "alignment": "CENTER",
+                "expand": True,
+            },
             slots={"controls": ("header", "body")},
         ),
-        # ── header band ────────────────────────────────────────────────
         _node(
             "Container",
             "header",
-            {
-                "bgcolor": ink,
-                "padding": {"left": 40, "top": 36, "right": 40, "bottom": 36},
-            },
+            {"bgcolor": ink, "padding": 40},
+            slots={"content": ("header_center",)},
+        ),
+        _node(
+            "Row",
+            "header_center",
+            {"alignment": "CENTER"},
+            slots={"controls": ("header_width",)},
+        ),
+        _node(
+            "Container",
+            "header_width",
+            {"width": 840},
             slots={"content": ("header_col",)},
         ),
+        # Keep the first title a direct child for editor selection/drop semantics.
         _node(
             "Column",
             "header_col",
-            {"spacing": 8, "horizontal_alignment": "START", "alignment": "START"},
-            slots={"controls": ("header_title", "header_tagline")},
+            {"spacing": 14, "horizontal_alignment": "START"},
+            slots={"controls": ("header_title", "header_detail")},
         ),
         _node(
             "Text",
             "header_title",
             {
-                "value": "Flet Visual Builder",
-                "size": 28,
+                "value": "YOUR CREATIVE WORKSPACE",
+                "size": 12,
+                "weight": "W_600",
+                "color": "#A5B4FC",
+            },
+        ),
+        _node(
+            "Column",
+            "header_detail",
+            {"spacing": 8},
+            slots={"controls": ("headline", "header_tagline")},
+        ),
+        _node(
+            "Text",
+            "headline",
+            {
+                "value": "From idea to interface.",
+                "size": 34,
                 "weight": "BOLD",
                 "color": paper,
             },
@@ -91,29 +118,45 @@ def starter_project() -> Project:
             "Text",
             "header_tagline",
             {
-                "value": "Design a screen, then export clean, runnable Python.",
-                "size": 14,
-                "color": "#A5B4FC",
+                "value": "Flet Visual Builder: design visually and export real Python.",
+                "size": 15,
+                "color": "#C7D2FE",
             },
         ),
-        # ── body ───────────────────────────────────────────────────────
         _node(
             "Container",
             "body",
-            {
-                "bgcolor": paper,
-                "padding": {"left": 40, "top": 32, "right": 40, "bottom": 32},
-            },
-            slots={"content": ("body_col",)},
+            {"bgcolor": canvas, "padding": 32},
+            slots={"content": ("body_center",)},
+        ),
+        _node(
+            "Row",
+            "body_center",
+            {"alignment": "CENTER"},
+            slots={"controls": ("body_width",)},
+        ),
+        _node(
+            "Container", "body_width", {"width": 840}, slots={"content": ("body_col",)}
         ),
         _node(
             "Column",
             "body_col",
             {"spacing": 16, "horizontal_alignment": "STRETCH"},
-            slots={"controls": ("body_title", "steps", "rule", "actions")},
+            slots={"controls": ("body_title", "intro", "steps", "rule", "actions")},
         ),
         _node(
-            "Text", "body_title", {"value": "Start here", "size": 18, "weight": "W_600"}
+            "Text",
+            "body_title",
+            {"value": "Start here", "size": 23, "weight": "BOLD", "color": ink},
+        ),
+        _node(
+            "Text",
+            "intro",
+            {
+                "value": "Your first screen is just three small steps away.",
+                "size": 14,
+                "color": muted,
+            },
         ),
         _node(
             "Column",
@@ -122,72 +165,102 @@ def starter_project() -> Project:
             slots={"controls": ("step1", "step2", "step3")},
         ),
     ]
-
     step_copy = (
-        ("step1", "1", "Drag widgets from the palette into the canvas."),
-        ("step2", "2", "Edit text, color, spacing, and handlers in the inspector."),
-        ("step3", "3", "Switch to Code and export a runnable Flet app."),
+        (
+            "step1",
+            "01",
+            "Build your layout",
+            "Drag widgets from the palette onto the canvas.",
+        ),
+        (
+            "step2",
+            "02",
+            "Make it yours",
+            "Fine-tune content, color and spacing in the inspector.",
+        ),
+        ("step3", "03", "Ship your app", "Open Code to export a runnable Flet app."),
     )
-    for row_id, number, copy in step_copy:
+    for row_id, number, title, copy in step_copy:
         nodes.extend(
             [
                 _node(
-                    "Row",
+                    "Container",
                     row_id,
-                    {"spacing": 12, "vertical_alignment": "CENTER"},
-                    slots={"controls": (f"{row_id}_badge", f"{row_id}_text")},
+                    {"bgcolor": paper, "padding": 14, "border_radius": 12},
+                    slots={"content": (f"{row_id}_row",)},
                 ),
                 _node(
-                    "Container",
+                    "Row",
+                    f"{row_id}_row",
+                    {"spacing": 16, "vertical_alignment": "CENTER"},
+                    slots={"controls": (f"{row_id}_badge", f"{row_id}_col")},
+                ),
+                _node(
+                    "CircleAvatar",
                     f"{row_id}_badge",
-                    {
-                        "width": 26,
-                        "height": 26,
-                        "bgcolor": accent_soft,
-                        "border_radius": 13,
-                        "alignment": "CENTER",
-                    },
+                    {"radius": 21, "bgcolor": "#EEF2FF"},
                     slots={"content": (f"{row_id}_num",)},
                 ),
                 _node(
                     "Text",
                     f"{row_id}_num",
-                    {"value": number, "size": 12, "weight": "W_600", "color": accent},
+                    {"value": number, "size": 12, "weight": "BOLD", "color": accent},
                 ),
-                _node("Text", f"{row_id}_text", {"value": copy, "size": 13}),
+                _node(
+                    "Column",
+                    f"{row_id}_col",
+                    {"spacing": 3, "expand": True},
+                    slots={"controls": (f"{row_id}_title", f"{row_id}_text")},
+                ),
+                _node(
+                    "Text",
+                    f"{row_id}_title",
+                    {"value": title, "size": 15, "weight": "W_600", "color": ink},
+                ),
+                _node(
+                    "Text",
+                    f"{row_id}_text",
+                    {"value": copy, "size": 13, "color": muted},
+                ),
             ]
         )
-
     nodes.extend(
         [
-            _node("Divider", "rule", {"thickness": 1, "color": "#E3E6EA"}),
+            _node("Divider", "rule", {"thickness": 1, "color": border}),
             _node(
                 "Row",
                 "actions",
-                {"spacing": 10, "vertical_alignment": "CENTER"},
-                slots={"controls": ("action_export", "action_save")},
+                {"spacing": 14, "vertical_alignment": "CENTER", "wrap": True},
+                slots={"controls": ("action_export", "action_hint")},
             ),
             _node(
                 "Button",
                 "action_export",
                 {
-                    "content": "Export code",
+                    "content": "Start designing  →",
                     "bgcolor": accent,
                     "color": paper,
                     "elevation": 0,
                 },
             ),
             _node(
-                "TextButton",
-                "action_save",
-                {"content": "Save project", "icon_color": accent},
+                "Text",
+                "action_hint",
+                {
+                    "value": "Tip: select any element to make it your own.",
+                    "size": 13,
+                    "color": muted,
+                },
             ),
         ]
     )
-
     return Project(
         name="Welcome",
-        page=_page("Welcome to Flet Visual Builder"),
+        page={
+            **_page("Welcome to Flet Visual Builder"),
+            "bgcolor": canvas,
+            "scroll": "none",
+        },
         root_ids=("root",),
         nodes={node.id: node for node in nodes},
         assets={},

@@ -9,6 +9,13 @@ The first release that is a usable editor rather than a prototype.
 
 ### Added
 
+- **Designed templates, verified visually.** Login, Dashboard, Settings, Profile and
+  Onboarding were rebuilt on a shared visual language (bounded centred content columns,
+  per-template accent skins, stronger hierarchy) and each was reviewed from rendered
+  screenshots rather than assumed.
+- **`tools/shoot.py`**: renders a document's exported `app.py` in a real Flet client on a
+  private X display and captures a PNG, so screenshots and visual review always reflect the
+  shipped output.
 - **Editor workspace** with a toolbar, widget palette, outline, design canvas, inspector,
   live preview, code view, diagnostics drawer and status bar.
 - **Design canvas** that renders real Flet controls inside selectable frames, with hover
@@ -48,6 +55,9 @@ The first release that is a usable editor rather than a prototype.
 
 ### Fixed
 
+- `Divider` no longer exposes a `width` property its Flet constructor rejects; setting it
+  used to generate code that crashed at runtime. A new contract test checks every catalogue
+  property and slot against the real Flet constructor, so this cannot recur.
 - Duplicating a node with children no longer fails validation, and cloned event handlers get
   fresh symbol names.
 - `Delete`/`Backspace` no longer deletes the selected node while typing in a text field.

@@ -62,8 +62,16 @@ def test_constructor_is_ft_symbol(type_id: str) -> None:
     assert spec.type_id == type_id
 
 
+#: Widgets whose Flet constructor rejects a shared property.
+SHARED_EXCEPTIONS: dict[str, frozenset[str]] = {"Divider": frozenset({"width"})}
+
+
 def test_shared_properties_present_on_every_widget() -> None:
     for type_id in WIDGET_ORDER:
         props = catalogue.widget(type_id).properties
+        omitted = SHARED_EXCEPTIONS.get(type_id, frozenset())
         for name in ("width", "height", "expand", "disabled", "visible"):
+            if name in omitted:
+                assert name not in props, f"{type_id} still exposes unsupported {name}"
+                continue
             assert name in props, f"{type_id} missing shared {name}"

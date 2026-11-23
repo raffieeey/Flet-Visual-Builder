@@ -114,6 +114,8 @@ WIDGET_SPECS: dict[str, WidgetSpec] = {
             _p("thickness", "nonneg_number", 1, nullable=True),
             _p("color", "color", U, nullable=True),
         ),
+        # ft.Divider has no `width`; exposing it produced code the constructor rejects.
+        omit_shared=frozenset({"width"}),
     ),
     "ProgressBar": _widget(
         "ProgressBar",
