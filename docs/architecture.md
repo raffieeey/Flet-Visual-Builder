@@ -1,108 +1,131 @@
-# Architecture — module boundaries and ownership
+# Architecture
 
-Ratified from TDD v2 §2.3. This is a placement of the frozen contracts, not a redesign.
+The editor is a pipeline. A user action becomes a command, the command produces a new
+immutable document, and every view is a projection of that document. Nothing in the UI
+mutates the document directly.
 
-## Module tree (TDD v2 §2.3.2, rewritten with the real `src/` prefix)
+```
+UI event
+  -> Workspace.dispatch(command)
+      -> HistoryDispatcher.execute(command, expected_revision)
+          -> Reducer.apply(snapshot, command)        pure, no Flet
+              -> validation (slots, depth, ids, values)
+          -> new DocumentSnapshot (revision + 1)
+      -> panels refresh for a named reason
+
+DocumentSnapshot
+  -> Lowering.lower_project(snapshot, catalogue)     -> ControlPlan
+      -> RuntimeRenderer.render_plan(plan)           -> live ft.Control tree
+      -> Codegen.generate_python(plan, options)      -> Python source
+```
+
+## Modules
 
 ```
 src/flet_visual_builder/
-  contracts.py
+  contracts.py            frozen dataclasses shared by every layer
+  app_context.py          Workspace: document, selection, dispatch, projections, panels
 
-  model/
-    reducer.py
-    validation.py
-
-  catalogue/
-    widgets.py
-    page.py
-    codecs.py
-    enum_manifest.py
-
-  engine/
-    lowering.py
-    runtime.py
-    codegen.py
-    formatting.py
-
-  interaction/
-    hit_test.py
-    drop_resolver.py
-    drag_controller.py
-
-  state/
-    history_dispatcher.py
-    editor_state.py
-
-  persistence/
-    json_repository.py
-    migrations.py
-    assets.py
-
-  platform/
-    file_gateway.py
-    clipboard_gateway.py
-    lifecycle.py
-
-  ui/
-    shell.py
-    palette.py
-    design_chrome.py
-    node_frame.py
-    tree_view.py
-    properties.py
-    live_preview.py
-    code_preview.py
-    diagnostics.py
-
-  app.py
+  catalogue/              widget specs, typed value codecs, page spec, enum/colour/icon allowlists
+  model/                  command reducer and document invariants (no Flet)
+  engine/                 lowering, runtime rendering, Python generation, formatting
+  state/                  history dispatcher and editor chrome state (no Flet)
+  persistence/            JSON repository, migrations, assets
+  interaction/            drag protocol and drop resolution
+  services/               project session, starter documents, templates
+  ui/                     panels and the composition root
+    theme.py              design tokens and shared primitives
+    panel.py              BasePanel contract
+    app.py                build(): page setup, panels, shell, shortcuts, file actions
 ```
 
-## Quoted rules (TDD v2 §2.3.2, exact)
+`app_context.Workspace` is the only object panels share. A panel gets it in the constructor,
+reads state from it, calls its command helpers, and implements `refresh(reason)`.
 
-model, catalogue, interaction, state, and JSON migration code must not import Flet at runtime.
+## Why the split exists
 
-Catalogue codecs produce typed symbolic values. Only engine/runtime.py, platform adapters, and UI modules turn those values into Flet objects.
+- **Determinism.** Documents are immutable and commands are pure, so undo/redo is a stack of
+  snapshots and any projection can be recomputed from a revision.
+- **Testability.** The reducer, catalogue, lowering and code generation are ordinary Python
+  with no Flet import. The whole engine is covered by unit and contract tests that never need
+  a display.
+- **One source of truth for widgets.** The palette, inspector, validator, renderer and code
+  generator all read the same `WidgetSpec`. Adding a widget is a catalogue change, not five
+  coordinated edits.
+- **Safety.** Generated code is produced from allowlisted symbols and validated as text
+  (AST + `py_compile`). The editor never executes user documents.
 
-## Ownership map
+## Invariants
 
-Ticket owners are taken from TDD v2 §2.9 ticket headers (`Files:`) and the §2.3.1 ownership table. Where the TDD does not name an owner, the module is `UNASSIGNED`.
+Enforced by `model/validation.py` on every commit:
 
-| Module | Owner |
+- node ids are identifier-safe and unique; the node map key matches `node.id`
+- every child id exists and appears in exactly one slot
+- slot cardinality (`minimum`, `maximum`) and accepted types hold
+- depth and node-count limits hold
+- property values validate against their codec
+- event symbols follow `handle_<node>_<event>`
+
+## Extension points
+
+**Add a widget.** Add a `WidgetSpec` in `catalogue/widgets.py` (properties with codec ids,
+creation defaults, slots, events). If a property needs a value shape no codec expresses, add
+a codec in `catalogue/codecs.py`. Then add a conformance case: the suite in
+`tests/catalogue_expansion/` runs every catalogue widget through validation, lowering,
+rendering and code generation.
+
+**Add a template.** Add a builder to `services/templates.py` returning a `Project`. Use only
+catalogue widget types and declared property names; the template tests load, lower, compile
+and render every template.
+
+**Add a panel.** Subclass `ui.panel.BasePanel`, declare the refresh reasons you care about,
+build your control in `build()`, register the panel in `ui/app.py` and mount it into a shell
+region.
+
+**Add a codec.** Implement `validate(value)` and `lower(value)` in `catalogue/codecs.py`,
+register it in `CODECS`, and give the inspector an editor in `ui/editors.py`.
+
+## Refresh reasons
+
+Panels rebuild only for reasons they subscribe to:
+
+| Reason | Meaning |
 | --- | --- |
-| `src/flet_visual_builder/contracts.py` | T03 |
-| `src/flet_visual_builder/schema/project.schema.json` | T03 |
-| `src/flet_visual_builder/model/reducer.py` | T04 |
-| `src/flet_visual_builder/model/validation.py` | T04 |
-| `src/flet_visual_builder/catalogue/widgets.py` | T05 |
-| `src/flet_visual_builder/catalogue/page.py` | T05 |
-| `src/flet_visual_builder/catalogue/codecs.py` | T05 |
-| `src/flet_visual_builder/catalogue/enum_manifest.py` | T05 |
-| `src/flet_visual_builder/engine/lowering.py` | T10 |
-| `src/flet_visual_builder/engine/runtime.py` | T10 |
-| `src/flet_visual_builder/engine/codegen.py` | T11 |
-| `src/flet_visual_builder/engine/formatting.py` | T11 |
-| `src/flet_visual_builder/interaction/hit_test.py` | T13 |
-| `src/flet_visual_builder/interaction/drop_resolver.py` | T13 |
-| `src/flet_visual_builder/interaction/drag_controller.py` | T13 |
-| `src/flet_visual_builder/state/history_dispatcher.py` | T09 |
-| `src/flet_visual_builder/state/editor_state.py` | T09 |
-| `src/flet_visual_builder/persistence/json_repository.py` | T06 |
-| `src/flet_visual_builder/persistence/migrations.py` | T06 |
-| `src/flet_visual_builder/persistence/assets.py` | T06 |
-| `src/flet_visual_builder/platform/file_gateway.py` | T15 |
-| `src/flet_visual_builder/platform/clipboard_gateway.py` | T15 |
-| `src/flet_visual_builder/platform/lifecycle.py` | T18 |
-| `src/flet_visual_builder/ui/shell.py` | T08 |
-| `src/flet_visual_builder/ui/palette.py` | T14 |
-| `src/flet_visual_builder/ui/design_chrome.py` | T14 |
-| `src/flet_visual_builder/ui/node_frame.py` | T14 |
-| `src/flet_visual_builder/ui/tree_view.py` | T14 |
-| `src/flet_visual_builder/ui/properties.py` | T12 |
-| `src/flet_visual_builder/ui/live_preview.py` | T16 |
-| `src/flet_visual_builder/ui/code_preview.py` | T16 |
-| `src/flet_visual_builder/ui/diagnostics.py` | UNASSIGNED |
-| `src/flet_visual_builder/app.py` | T16 |
+| `ALL` | initial mount, or an explicit full rebuild |
+| `DOCUMENT` | the node graph or a property changed |
+| `SELECTION` | selection moved, document unchanged |
+| `PROJECT` | a different document was adopted |
+| `CHROME` | save/dirty/undo availability changed |
+| `LAYOUT` | device width or active tab changed |
+| `STATUS` | status text only |
 
-§2.3.1 area owners (for interfaces, not extra modules): shared contracts T03; pure command reduction T04; final history-aware `CommandDispatcher` T09; widget definitions and pure value lowering T05; clean runtime rendering and leaf samples T10; drag session and drop resolution T13; Design frames, handles, rails, and targets T14 only; application composition T16.
+Panels that contain a text input must not rebuild on `DOCUMENT`; rebuilding recreates the
+field and steals focus mid-typing. Those panels update dependent widgets in place instead.
 
-T10 does not construct Design chrome. T14 does not implement a second application renderer. Only the contract owner changes `contracts.py`.
+## File format
+
+`.fvb.json` is a versioned document:
+
+```json
+{
+  "schema_version": 2,
+  "catalogue_version": 1,
+  "target_flet": "1.0.1",
+  "name": "Dashboard",
+  "page": {"title": "Dashboard", "padding": 0, "scroll": "AUTO"},
+  "root_ids": ["root"],
+  "nodes": {
+    "root": {
+      "id": "root",
+      "type_id": "Column",
+      "props": {},
+      "slots": {"controls": []},
+      "events": {}
+    }
+  },
+  "assets": {}
+}
+```
+
+Loading runs migrations for older schema versions, validates the whole document, and rejects
+anything that violates an invariant. Saves are atomic and bounded in size.

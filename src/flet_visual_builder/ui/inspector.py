@@ -1,75 +1,257 @@
-"""Inspector: typed property editors for the selection or the page."""
+"""Selection and page property inspector, with focus-safe document refreshes."""
 
 from __future__ import annotations
-
-from typing import Any
 
 import flet as ft
 
 from flet_visual_builder.app_context import Refresh
-from flet_visual_builder.catalogue import CODECS
-from flet_visual_builder.contracts import PropertySpec
+from flet_visual_builder.ui.editors import create_editor
 from flet_visual_builder.ui.panel import BasePanel
 from flet_visual_builder.ui.theme import (
-    F_BODY,
     F_LABEL,
     MD,
-    R_MD,
     SM,
     T,
-    empty_state,
     faint,
-    label,
+    icon_button,
     section,
     text,
 )
 
-SHARED = ("width", "height", "expand", "disabled", "visible")
+_LAYOUT = frozenset(
+    {
+        "width",
+        "height",
+        "expand",
+        "padding",
+        "margin",
+        "alignment",
+        "horizontal_alignment",
+        "vertical_alignment",
+        "spacing",
+        "tight",
+        "wrap",
+        "scroll",
+        "horizontal",
+        "auto_scroll",
+    }
+)
+_STYLE = frozenset(
+    {
+        "size",
+        "weight",
+        "color",
+        "bgcolor",
+        "icon_color",
+        "icon_size",
+        "text_align",
+        "border",
+        "border_radius",
+        "elevation",
+        "thickness",
+        "theme",
+        "theme_mode",
+    }
+)
+
+
+CODEC_LABELS = {
+    "string": "Text",
+    "boolean": "Toggle",
+    "nonneg_number": "Number",
+    "unit_interval": "0 to 1",
+    "expand": "Flex",
+    "color": "Color",
+    "icon": "Icon",
+    "image_source": "Image",
+    "padding": "Padding",
+    "margin": "Margin",
+    "border": "Border",
+    "radius": "Radius",
+    "input_border": "Input border",
+    "appbar": "App bar",
+    "theme": "Theme",
+}
+
+
+ENUM_LABELS = {
+    "MainAxisAlignment": "Alignment",
+    "CrossAxisAlignment": "Cross align",
+    "FontWeight": "Weight",
+    "ScrollMode": "Scroll",
+    "TextAlign": "Text align",
+    "ThemeMode": "Theme mode",
+    "BoxFit": "Fit",
+    "Alignment": "Alignment",
+}
+
+
+def codec_label(codec_id: str) -> str:
+    """Human wording for a codec id; enum families read as their own name."""
+    if codec_id.startswith("enum."):
+        family = codec_id.split(".", 1)[1]
+        return ENUM_LABELS.get(family, family.replace("_", " "))
+    return CODEC_LABELS.get(codec_id, codec_id.replace("_", " ").title())
+
+
+def _group(name):
+    if name in _LAYOUT:
+        return "Layout"
+    if name in _STYLE:
+        return "Style"
+    return "Content"
 
 
 class Inspector(BasePanel):
-    interests = frozenset({Refresh.SELECTION, Refresh.PROJECT, Refresh.DOCUMENT})
+    interests = frozenset({Refresh.SELECTION, Refresh.PROJECT})
+
+    def refresh(self, reason):
+        if reason == Refresh.DOCUMENT:
+            self._refresh_labels()
+            return
+        super().refresh(reason)
+
+    def _refresh_labels(self):
+        # Mutate only derived labels: never replace the input under the cursor.
+        props = (
+            self.ws.project.page
+            if self._node_id is None
+            else (
+                self.ws.node(self._node_id).props if self.ws.node(self._node_id) else {}
+            )
+        )
+        diagnostics = self.ws.diagnostics()
+        for name, (status, reset, error) in self._rows.items():
+            is_set = name in props
+            status.value = "Set" if is_set else "Default"
+            reset.disabled = not is_set
+            prefix = ("page", name) if self._node_id is None else ("props", name)
+            matches = [
+                d.message
+                for d in diagnostics
+                if d.node_id == self._node_id
+                and (
+                    tuple(d.path[:2]) == prefix
+                    or (
+                        self._node_id is not None
+                        and tuple(d.path[:4]) == ("nodes", self._node_id, "props", name)
+                    )
+                )
+            ]
+            error.value = " · ".join(matches)
+            error.visible = bool(matches)
+        if self._node_id is not None:
+            node = self.ws.node(self._node_id)
+            for name, label in self._event_labels.items():
+                symbol = node.events.get(name) if node else None
+                label.value = symbol.name if symbol else "Not bound"
 
     def build(self) -> ft.Control:
         node = self.ws.selected_node()
-        if node is None:
-            return empty_state(
-                ft.Icons.TUNE,
-                "Nothing selected",
-                "Select a widget on the canvas or in the outline.",
+        self._node_id = node.id if node else None
+        self._rows = {}
+        self._event_labels = {}
+        if node:
+            specs = self.ws.spec(node.type_id).properties
+            props = node.props
+            parent = self.ws.parent_of(node.id)
+            subtitle = f"ID: {node.id} · Parent: {parent[0] if parent else 'Page'}"
+            header = ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            text(
+                                node.type_id,
+                                size=F_LABEL,
+                                weight=ft.FontWeight.W_600,
+                                expand=True,
+                            ),
+                            ft.TextButton(
+                                content="Page settings",
+                                on_click=lambda e: self.ws.select(None),
+                            ),
+                        ]
+                    ),
+                    faint(subtitle),
+                ],
+                tight=True,
+                spacing=2,
             )
-        spec = self.ws.spec(node.type_id)
-        props = [
-            (name, prop)
-            for name, prop in spec.properties.items()
-            if name not in SHARED
+        else:
+            specs, props = self.ws.catalogue.page_properties, self.ws.project.page
+            header = ft.Column(
+                controls=[
+                    text("Page", size=F_LABEL, weight=ft.FontWeight.W_600),
+                    faint("Page settings"),
+                ],
+                tight=True,
+                spacing=2,
+            )
+        groups = {name: [] for name in ("Content", "Layout", "Style")}
+        for name, spec in specs.items():
+            groups[_group(name)].append(self._property_row(name, spec, props))
+        sections = [
+            section(name, ft.Column(controls=rows, spacing=SM, tight=True))
+            for name, rows in groups.items()
+            if rows
         ]
+        if node:
+            events = []
+            for event_name in sorted(self.ws.spec(node.type_id).events):
+                symbol = node.events.get(event_name)
+                symbol_label = faint(symbol.name if symbol else "Not bound")
+                self._event_labels[event_name] = symbol_label
+
+                def toggle(
+                    e, event_name=event_name, node_id=node.id, label=symbol_label
+                ):
+                    result = self.ws.set_event(node_id, event_name, e.control.value)
+                    actual = self.ws.node(node_id).events.get(event_name)
+                    if result.status.value == "rejected":
+                        e.control.value = bool(actual)
+                    label.value = actual.name if actual else "Not bound"
+
+                events.append(
+                    ft.Column(
+                        controls=[
+                            ft.Switch(
+                                label=event_name,
+                                value=bool(symbol),
+                                data=("event", event_name),
+                                on_change=toggle,
+                            ),
+                            symbol_label,
+                        ],
+                        tight=True,
+                        spacing=0,
+                    )
+                )
+            sections.append(
+                section(
+                    "Events",
+                    ft.Column(
+                        controls=events or [faint("No events")], spacing=SM, tight=True
+                    ),
+                )
+            )
+        self._refresh_labels()
         return ft.Column(
             controls=[
                 ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Row(
-                                controls=[
-                                    text(node.type_id, size=F_LABEL, weight=ft.FontWeight.W_600),
-                                    ft.Container(expand=True),
-                                    faint(node.id, size=10),
-                                ],
-                            ),
-                            faint(f"{len(node.slots)} slots · {len(node.events)} events"),
-                        ],
-                        spacing=2,
-                        tight=True,
+                    content=header,
+                    padding=MD,
+                    border=ft.Border(
+                        bottom=ft.BorderSide(width=1, color=T.border_soft)
                     ),
-                    padding=ft.Padding(left=MD, top=MD, right=MD, bottom=SM),
-                    border=ft.Border(bottom=ft.BorderSide(width=1, color=T.border_soft)),
                 ),
-                ft.Column(
-                    controls=[
-                        self._field(node, name, prop) for name, prop in props
-                    ],
-                    spacing=SM,
-                    scroll=ft.ScrollMode.AUTO,
+                ft.Container(
+                    content=ft.Column(
+                        controls=sections,
+                        spacing=MD,
+                        scroll=ft.ScrollMode.AUTO,
+                        expand=True,
+                    ),
+                    padding=MD,
                     expand=True,
                 ),
             ],
@@ -77,57 +259,52 @@ class Inspector(BasePanel):
             expand=True,
         )
 
-    def _field(self, node, name: str, prop: PropertySpec) -> ft.Control:
-        value = node.props.get(name)
-        codec = prop.codec_id
-        if codec == "boolean":
-            control = ft.Switch(value=bool(value), on_change=lambda e, n=name: self.ws.set_property(node.id, n, e.control.value))
-        elif codec in ("nonneg_number", "unit_interval"):
-            control = ft.TextField(
-                value="" if value is None else str(value),
-                dense=True,
-                text_size=F_BODY,
-                on_submit=lambda e, n=name: self._commit_number(node.id, n, e.control.value),
-                on_blur=lambda e, n=name: self._commit_number(node.id, n, e.control.value),
-            )
-        elif codec.startswith("enum."):
-            members = sorted(getattr(CODECS[codec], "members", frozenset()))
-            control = ft.Dropdown(
-                value=value,
-                dense=True,
-                text_size=F_BODY,
-                options=[ft.DropdownOption(key=m, text=m) for m in members],
-                on_select=lambda e, n=name: self.ws.set_property(node.id, n, e.control.value),
-            )
-        else:
-            control = ft.TextField(
-                value="" if value is None else str(value),
-                dense=True,
-                text_size=F_BODY,
-                on_submit=lambda e, n=name: self.ws.set_property(node.id, n, e.control.value),
-                on_blur=lambda e, n=name: self.ws.set_property(node.id, n, e.control.value),
-            )
+    def _property_row(self, name, spec, props):
+        status = ft.Container(
+            width=5,
+            height=5,
+            border_radius=3,
+            bgcolor=T.accent if name in props else T.border_strong,
+            tooltip="Customised" if name in props else "Using the default",
+        )
+        error = text("", size=11, color=T.danger, visible=False)
+        host = ft.Container()
+
+        def changed():
+            self._refresh_labels()
+
+        editor = create_editor(self.ws, self._node_id, spec, props.get(name), changed)
+        host.content = editor.control
+
+        def reset(e):
+            result = self.ws.unset_property(self._node_id, name)
+            if result.status.value != "rejected":
+                # Reset is an explicit action: replace just this editor, not the panel.
+                host.content = create_editor(
+                    self.ws, self._node_id, spec, None, changed
+                ).control
+                self._refresh_labels()
+
+        reset_button = icon_button(
+            ft.Icons.RESTART_ALT, f"Reset {name}", reset, disabled=name not in props
+        )
+        reset_button.data = ("reset", name)
+        self._rows[name] = (status, reset_button, error)
         return ft.Column(
+            data=("property", name),
             controls=[
                 ft.Row(
                     controls=[
-                        text(name, size=11, color=T.text_muted),
-                        ft.Container(expand=True),
-                        faint(codec, size=9),
+                        text(name, size=11, color=T.text_muted, expand=True),
+                        faint(codec_label(spec.codec_id), size=10),
+                        status,
+                        reset_button,
                     ],
+                    spacing=2,
                 ),
-                control,
+                host,
+                error,
             ],
             spacing=2,
             tight=True,
         )
-
-    def _commit_number(self, node_id: str, name: str, raw: str) -> None:
-        raw = raw.strip()
-        if not raw:
-            self.ws.unset_property(node_id, name)
-            return
-        try:
-            self.ws.set_property(node_id, name, float(raw))
-        except ValueError:
-            self.ws.toast(f"{name} expects a number", "error")

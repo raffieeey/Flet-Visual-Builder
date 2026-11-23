@@ -19,8 +19,10 @@ from flet_visual_builder.contracts import (
     MoveNode,
     Node,
     NodeId,
+    PasteNodes,
     Project,
     Redo,
+    RenameProject,
     ReplaceProject,
     SetEvent,
     SetProperty,
@@ -227,7 +229,9 @@ def _limit_errors(
     return tuple(errors)
 
 
-def _fresh_node_errors(node: Node, *, existing: Mapping[NodeId, Node]) -> tuple[Diagnostic, ...]:
+def _fresh_node_errors(
+    node: Node, *, existing: Mapping[NodeId, Node]
+) -> tuple[Diagnostic, ...]:
     errors: list[Diagnostic] = []
     if not is_identifier_safe_node_id(node.id):
         errors.append(
@@ -327,7 +331,11 @@ def _apply_insert(snapshot: DocumentSnapshot, command: InsertNode) -> CommandRes
     nodes = dict(project.nodes)
     nodes[node.id] = node
     new_project, _ = _replace_slot(
-        replace(project, nodes=nodes), dest.parent_id, dest.slot_name, new_children, nodes
+        replace(project, nodes=nodes),
+        dest.parent_id,
+        dest.slot_name,
+        new_children,
+        nodes,
     )
     affected = {node.id}
     if dest.parent_id is not None:
@@ -461,7 +469,11 @@ def _apply_move(snapshot: DocumentSnapshot, command: MoveNode) -> CommandResult:
     if index_error is not None:
         return _reject(snapshot, command.command_id, index_error)
 
-    if same_slot and dest.index < len(src_children) and src_children[dest.index] == node_id:
+    if (
+        same_slot
+        and dest.index < len(src_children)
+        and src_children[dest.index] == node_id
+    ):
         # Same list, already at the post-removal index that restores position.
         restored = (
             without_source[: dest.index] + (node_id,) + without_source[dest.index :]
@@ -517,10 +529,7 @@ def _apply_move(snapshot: DocumentSnapshot, command: MoveNode) -> CommandResult:
             new_project, dest.parent_id, dest.slot_name, placed, nodes
         )
 
-    if (
-        new_project.root_ids == project.root_ids
-        and new_project.nodes == project.nodes
-    ):
+    if new_project.root_ids == project.root_ids and new_project.nodes == project.nodes:
         return _noop(snapshot, command.command_id)
 
     affected = {node_id}
@@ -561,7 +570,11 @@ def _apply_wrap(snapshot: DocumentSnapshot, command: WrapNode) -> CommandResult:
         return _reject(
             snapshot,
             command.command_id,
-            _error("id.duplicate", "Wrapper id collides with wrapped node", node_id=wrapper.id),
+            _error(
+                "id.duplicate",
+                "Wrapper id collides with wrapped node",
+                node_id=wrapper.id,
+            ),
         )
 
     # Owner slot keeps the same occupancy (replace node with wrapper).
@@ -607,9 +620,7 @@ def _apply_wrap(snapshot: DocumentSnapshot, command: WrapNode) -> CommandResult:
             command.command_id,
             _error("node.missing", "Wrap owner slot is missing", node_id=parent_id),
         )
-    replaced = (
-        owner_children[:index] + (wrapper.id,) + owner_children[index + 1 :]
-    )
+    replaced = owner_children[:index] + (wrapper.id,) + owner_children[index + 1 :]
     new_slots = dict(wrapper.slots)
     new_slots[command.wrapper_slot] = (node_id,)
     placed_wrapper = replace(wrapper, slots=new_slots)
@@ -665,7 +676,11 @@ def _apply_set_property(
         return _reject(
             snapshot,
             command.command_id,
-            _error("property.name", "Property name must be non-empty", node_id=command.node_id),
+            _error(
+                "property.name",
+                "Property name must be non-empty",
+                node_id=command.node_id,
+            ),
         )
     current = props.get(command.name, _MISSING)
     if current is not _MISSING and _json_equal(current, command.value):
@@ -718,7 +733,9 @@ def _apply_set_event(snapshot: DocumentSnapshot, command: SetEvent) -> CommandRe
         return _reject(
             snapshot,
             command.command_id,
-            _error("event.name", "Event name must be non-empty", node_id=command.node_id),
+            _error(
+                "event.name", "Event name must be non-empty", node_id=command.node_id
+            ),
         )
     if command.symbol is None:
         if command.event_name not in node.events:
@@ -751,7 +768,9 @@ def _apply_set_event(snapshot: DocumentSnapshot, command: SetEvent) -> CommandRe
     )
 
 
-def _apply_replace(snapshot: DocumentSnapshot, command: ReplaceProject) -> CommandResult:
+def _apply_replace(
+    snapshot: DocumentSnapshot, command: ReplaceProject
+) -> CommandResult:
     errors = validate_project(command.project)
     if errors:
         return _reject(snapshot, command.command_id, *errors)
@@ -763,6 +782,136 @@ def _apply_replace(snapshot: DocumentSnapshot, command: ReplaceProject) -> Comma
         command.command_id,
         frozenset(command.project.nodes),
     )
+
+
+def _apply_rename(snapshot: DocumentSnapshot, command: RenameProject) -> CommandResult:
+    name = command.name.strip()
+    if not name:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error("project.name", "Project name must be non-empty"),
+        )
+    if name == snapshot.project.name:
+        return _noop(snapshot, command.command_id)
+    return _commit(
+        snapshot,
+        replace(snapshot.project, name=name),
+        command.command_id,
+        frozenset(),
+    )
+
+
+def _apply_paste(snapshot: DocumentSnapshot, command: PasteNodes) -> CommandResult:
+    project = snapshot.project
+    payload = tuple(command.nodes)
+    if not payload:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error("paste.empty", "Paste payload is empty"),
+        )
+
+    incoming: dict[NodeId, Node] = {}
+    for node in payload:
+        if not is_identifier_safe_node_id(node.id):
+            return _reject(
+                snapshot,
+                command.command_id,
+                _error(
+                    "id.invalid",
+                    f"Node id {node.id!r} is not a bounded identifier-safe name",
+                    node_id=node.id,
+                ),
+            )
+        if node.id in incoming:
+            return _reject(
+                snapshot,
+                command.command_id,
+                _error(
+                    "id.duplicate",
+                    f"Paste payload repeats node id {node.id!r}",
+                    node_id=node.id,
+                ),
+            )
+        if node.id in project.nodes:
+            return _reject(
+                snapshot,
+                command.command_id,
+                _error(
+                    "id.duplicate",
+                    f"Node id {node.id!r} already exists",
+                    node_id=node.id,
+                ),
+            )
+        incoming[node.id] = node
+
+    referenced: set[NodeId] = set()
+    for node in payload:
+        for slot_name, child_ids in node.slots.items():
+            for child_id in child_ids:
+                if child_id not in incoming:
+                    return _reject(
+                        snapshot,
+                        command.command_id,
+                        _error(
+                            "paste.dangling",
+                            f"Pasted node {node.id!r} references missing child "
+                            f"{child_id!r}",
+                            node_id=node.id,
+                        ),
+                    )
+                referenced.add(child_id)
+
+    roots = [node for node in payload if node.id not in referenced]
+    if len(roots) != 1:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error(
+                "paste.roots",
+                f"Paste payload must contain exactly one root, found {len(roots)}",
+            ),
+        )
+    root = roots[0]
+    dest = command.destination
+
+    current = slot_children(project, dest.parent_id, dest.slot_name)
+    if current is None:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error(
+                "node.missing" if dest.parent_id is not None else "slot.unknown",
+                "Paste destination does not exist",
+                node_id=dest.parent_id,
+            ),
+        )
+    index_error = validate_index(dest.index, len(current))
+    if index_error is not None:
+        return _reject(snapshot, command.command_id, index_error)
+
+    dest_errors = _destination_errors(
+        project,
+        dest,
+        child_type=root.type_id,
+        count_after=len(current) + 1,
+        node_id=root.id,
+    )
+    if dest_errors:
+        return _reject(snapshot, command.command_id, *dest_errors)
+
+    new_children = current[: dest.index] + (root.id,) + current[dest.index :]
+    nodes = dict(project.nodes)
+    nodes.update(incoming)
+    new_project, _ = _replace_slot(
+        replace(project, nodes=nodes),
+        dest.parent_id,
+        dest.slot_name,
+        new_children,
+        nodes,
+    )
+    return _commit(snapshot, new_project, command.command_id, frozenset(incoming))
 
 
 def _history_unsupported(
@@ -783,9 +932,7 @@ def _history_unsupported(
 class Reducer:
     """CommandReducer: atomic, pure document transformations."""
 
-    def apply(
-        self, snapshot: DocumentSnapshot, command: CommandADT
-    ) -> CommandResult:
+    def apply(self, snapshot: DocumentSnapshot, command: CommandADT) -> CommandResult:
         if isinstance(command, InsertNode):
             return _apply_insert(snapshot, command)
         if isinstance(command, DeleteNode):
@@ -802,6 +949,10 @@ class Reducer:
             return _apply_set_event(snapshot, command)
         if isinstance(command, ReplaceProject):
             return _apply_replace(snapshot, command)
+        if isinstance(command, RenameProject):
+            return _apply_rename(snapshot, command)
+        if isinstance(command, PasteNodes):
+            return _apply_paste(snapshot, command)
         if isinstance(command, (Undo, Redo)):
             return _history_unsupported(snapshot, command)
         return _reject(

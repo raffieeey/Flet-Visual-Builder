@@ -32,38 +32,13 @@ SUPPORTED_SCHEMA_VERSION: Final[int] = 2
 SUPPORTED_CATALOGUE_VERSION: Final[int] = 1
 SUPPORTED_TARGET_FLET: Final[str] = "1.0.1"
 
-NODE_ID_PATTERN: Final[re.Pattern[str]] = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*$"
-)
+NODE_ID_PATTERN: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-# Structural occupancy from TDD §2.4.3. Not the T05 catalogue: no properties,
-# events, defaults, or codecs. Unknown type_ids skip these checks. accepted_types
-# is None (any visual type) for every current slot.
-
-
-def _slot(name: str, maximum: int | None) -> SlotSpec:
-    return SlotSpec(
-        name=name, minimum=0, maximum=maximum, accepted_types=None
-    )
-
+# Structural occupancy is derived from the authoritative catalogue.
+from flet_visual_builder.catalogue.widgets import WIDGET_SPECS
 
 STRUCTURAL_SLOTS: Final[Mapping[str, Mapping[str, SlotSpec]]] = {
-    "Text": {},
-    "Icon": {},
-    "Image": {"error_content": _slot("error_content", 1)},
-    "Divider": {},
-    "ProgressBar": {},
-    "TextField": {},
-    "Checkbox": {},
-    "Switch": {},
-    "Button": {"content": _slot("content", 1)},
-    "IconButton": {},
-    "Container": {"content": _slot("content", 1)},
-    "Column": {"controls": _slot("controls", None)},
-    "Row": {"controls": _slot("controls", None)},
-    "Card": {"content": _slot("content", 1)},
-    "ListView": {"controls": _slot("controls", None)},
-    "TextButton": {"content": _slot("content", 1)},
+    type_id: spec.slots for type_id, spec in WIDGET_SPECS.items()
 }
 
 
@@ -216,9 +191,7 @@ def subtree_height(project: Project, node_id: NodeId) -> int:
     return _height(node_id)
 
 
-def destination_depth(
-    project: Project, parent_id: NodeId | None
-) -> int | None:
+def destination_depth(project: Project, parent_id: NodeId | None) -> int | None:
     """Depth a newly placed child would have under parent_id."""
     if parent_id is None:
         return 1
@@ -513,9 +486,7 @@ def validate_project(project: Project) -> tuple[Diagnostic, ...]:
                 if child_id not in nodes:
                     dangling.append((node.id, slot_name, child_id))
                 else:
-                    owners.setdefault(child_id, []).append(
-                        (node.id, slot_name, index)
-                    )
+                    owners.setdefault(child_id, []).append((node.id, slot_name, index))
 
     for parent_id, slot_name, child_id in dangling:
         errors.append(

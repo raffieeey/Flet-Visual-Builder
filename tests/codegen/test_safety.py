@@ -1,4 +1,5 @@
 """Safety: the generator never eval/exec/import project expressions."""
+
 from __future__ import annotations
 
 import ast

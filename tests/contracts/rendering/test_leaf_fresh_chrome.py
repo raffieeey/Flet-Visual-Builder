@@ -1,4 +1,5 @@
 """Leaf samples, fresh instances, and absence of design chrome."""
+
 from __future__ import annotations
 
 import flet as ft
@@ -75,7 +76,9 @@ def test_clean_preview_has_no_drag_targets_or_handles() -> None:
     assert tree
     assert not any(isinstance(control, ft.DragTarget) for control in tree)
     assert not any(isinstance(control, ft.Draggable) for control in tree)
-    assert not any(type(control).__name__ in {"DragTarget", "Draggable"} for control in tree)
+    assert not any(
+        type(control).__name__ in {"DragTarget", "Draggable"} for control in tree
+    )
     # PageSpec adapter only: Pagelet + themed Container, no per-node frames.
     pagelets = [c for c in tree if isinstance(c, ft.Pagelet)]
     assert len(pagelets) == 1

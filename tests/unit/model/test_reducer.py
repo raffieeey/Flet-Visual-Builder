@@ -410,9 +410,7 @@ def test_unset_null_false_zero_remain_distinct() -> None:
     s_zero = reducer.apply(
         snap, SetProperty(command_id="z", node_id="t0", name="k", value=0)
     )
-    s_unset = reducer.apply(
-        snap, UnsetProperty(command_id="u", node_id="t0", name="k")
-    )
+    s_unset = reducer.apply(snap, UnsetProperty(command_id="u", node_id="t0", name="k"))
     assert s_null.snapshot.project.nodes["t0"].props["k"] is None
     assert s_false.snapshot.project.nodes["t0"].props["k"] is False
     assert s_zero.snapshot.project.nodes["t0"].props["k"] == 0
@@ -450,7 +448,9 @@ def test_page_property_uses_none_node_id() -> None:
     )
     assert result.status is CommandStatus.COMMITTED
     assert result.snapshot.project.page["title"] == "Hi"
-    unset = apply(result.snapshot, UnsetProperty(command_id="up", node_id=None, name="title"))
+    unset = apply(
+        result.snapshot, UnsetProperty(command_id="up", node_id=None, name="title")
+    )
     assert unset.status is CommandStatus.COMMITTED
     assert "title" not in unset.snapshot.project.page
 
@@ -471,7 +471,9 @@ def test_set_event_syntax_and_remove() -> None:
         SetEvent(command_id="e", node_id="t0", event_name="on_click", symbol=symbol),
     )
     assert bound.status is CommandStatus.COMMITTED
-    assert bound.snapshot.project.nodes["t0"].events["on_click"].name == "handle_t0_click"
+    assert (
+        bound.snapshot.project.nodes["t0"].events["on_click"].name == "handle_t0_click"
+    )
     removed = apply(
         bound.snapshot,
         SetEvent(command_id="e2", node_id="t0", event_name="on_click", symbol=None),
@@ -507,9 +509,7 @@ def test_set_event_remove_missing_is_noop() -> None:
 def test_replace_project_commits_valid_document() -> None:
     snap = column_with_texts(0)
     other = column_with_texts(2, revision=99)
-    result = apply(
-        snap, ReplaceProject(command_id="rp", project=other.project)
-    )
+    result = apply(snap, ReplaceProject(command_id="rp", project=other.project))
     assert result.status is CommandStatus.COMMITTED
     assert result.snapshot.revision == snap.revision + 1
     assert result.snapshot.project.nodes["root"].slots["controls"] == ("t0", "t1")
@@ -590,9 +590,7 @@ def test_insert_invalid_node_id_rejected() -> None:
 
 def test_insert_beyond_max_nodes_rejected() -> None:
     texts = [make_node(f"n{i}", "Text") for i in range(MAX_NODES - 1)]
-    root = make_node(
-        "root", "Column", slots={"controls": tuple(t.id for t in texts)}
-    )
+    root = make_node("root", "Column", slots={"controls": tuple(t.id for t in texts)})
     snap = make_snapshot(root, *texts)
     assert len(snap.project.nodes) == MAX_NODES
     result = apply(

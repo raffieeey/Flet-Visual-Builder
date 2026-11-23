@@ -1,12 +1,23 @@
-"""Live preview: the document rendered exactly as it will ship."""
+"""Live, device-framed projection of the current document."""
 
 from __future__ import annotations
 
 import flet as ft
 
-from flet_visual_builder.app_context import Refresh
+from flet_visual_builder.app_context import DEVICE_LABELS, Refresh
 from flet_visual_builder.ui.panel import BasePanel
-from flet_visual_builder.ui.theme import LG, T, empty_state
+from flet_visual_builder.ui.theme import (
+    LG,
+    MD,
+    R_LG,
+    SM,
+    T,
+    empty_state,
+    faint,
+    icon_button,
+    pill,
+    text,
+)
 
 
 class Preview(BasePanel):
@@ -14,14 +25,86 @@ class Preview(BasePanel):
 
     def build(self) -> ft.Control:
         plan = self.ws.plan()
-        if plan is None:
-            return empty_state(ft.Icons.ERROR_OUTLINE, "Preview unavailable", "Fix the diagnostics first.")
-        rendered = self.ws.renderer.render_plan(plan)
-        if rendered.root is None:
-            return empty_state(ft.Icons.ERROR_OUTLINE, "Preview unavailable", "The renderer reports an error.")
-        return ft.Container(
-            content=rendered.root,
-            expand=True,
+        diagnostics = self.ws.diagnostics()
+        root = None
+        failure = None
+        detail = "No preview root was produced (no diagnostic available)."
+        if plan is not None:
+            try:
+                rendered = self.ws.renderer.render_plan(plan)
+                root = rendered.root
+                if root is None:
+                    failure = rendered.diagnostics[0] if rendered.diagnostics else None
+            except Exception as exc:
+                failure = None
+                detail = f"Preview render failed: {exc}"
+        else:
+            detail = "The document could not be rendered."
+
+        failed = root is None
+        if failed:
+            diagnostic = failure or (diagnostics[0] if diagnostics else None)
+            if diagnostic is not None:
+                detail = f"{diagnostic.code}: {diagnostic.message}"
+            root = empty_state(ft.Icons.ERROR_OUTLINE, "Preview unavailable", detail)
+
+        title = self.ws.project.page.get("title") or self.ws.project.name
+        width = self.ws.device_width()
+        toolbar = ft.Row(
+            controls=[
+                text(
+                    str(title),
+                    weight=ft.FontWeight.W_600,
+                    expand=True,
+                    max_lines=1,
+                    overflow=ft.TextOverflow.ELLIPSIS,
+                ),
+                faint(DEVICE_LABELS.get(self.ws.device, self.ws.device)),
+                (
+                    pill("Stale", color=T.danger, bgcolor=T.danger_soft)
+                    if failed
+                    else faint("Live")
+                ),
+                icon_button(
+                    ft.Icons.REFRESH,
+                    "Refresh preview",
+                    lambda e: self.refresh(Refresh.ALL),
+                ),
+            ],
+            spacing=SM,
+        )
+        frame = ft.Container(
+            content=root,
+            width=width,
+            expand=width is None,
             bgcolor=T.panel,
-            padding=0,
+            border=ft.Border.all(1, T.border_strong),
+            border_radius=R_LG,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+        )
+        viewport = (
+            frame
+            if width is None
+            else ft.Row(
+                controls=[frame],
+                expand=True,
+                spacing=0,
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.STRETCH,
+                scroll=ft.ScrollMode.AUTO,
+            )
+        )
+        return ft.Column(
+            controls=[
+                ft.Container(
+                    content=toolbar,
+                    padding=ft.Padding(left=LG, top=SM, right=MD, bottom=SM),
+                    bgcolor=T.panel,
+                ),
+                ft.Container(
+                    content=viewport, padding=LG, bgcolor=T.canvas_bg, expand=True
+                ),
+            ],
+            spacing=0,
+            expand=True,
         )

@@ -1,4 +1,5 @@
 """TDD v2 §2.4 transcribed as the expected catalogue table."""
+
 from __future__ import annotations
 
 from flet_visual_builder.contracts import Unset

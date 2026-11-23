@@ -1,64 +1,182 @@
 # Flet Visual Builder
 
-Flet Visual Builder (FVB) is a drag-and-drop UI builder for Flet apps.
+Design a Flet interface visually, then export clean Python you own.
 
-> ⚠️ **Disclaimer:** This project is currently experimental and can be **very buggy**.
->
-> ⚠️ **Vibe Code Alert:** This project was 99% vibe coded as a fun long weekend hack.
+![Design mode](docs/screenshots/design.png)
 
+Flet Visual Builder is a desktop editor for [Flet](https://flet.dev) apps. Drag widgets
+onto a canvas, edit typed properties in an inspector, check the live preview, and export a
+runnable `app.py`. The document is a plain JSON file; the output is ordinary Flet code with
+no runtime dependency on this project.
 
+## What it does
 
-## Current MVP foundation
+- **Canvas with real controls.** The canvas renders the actual Flet controls, wrapped in
+  selectable frames. Click to select, drag to reorder, drop from the palette to insert.
+- **43-widget catalogue.** Layout (`Column`, `Row`, `Container`, `Stack`, `GridView`,
+  `ResponsiveRow`, `ListView`, `Card`, `SafeArea`, `ExpansionTile`), text, inputs,
+  buttons, display widgets and navigation, each with typed properties and real events.
+- **Typed inspector.** Every property is edited through its own control: numbers, toggles,
+  enum dropdowns, colour fields with swatches, icon pickers, padding/margin/radius editors,
+  borders, plus page-level settings (title, padding, theme, app bar). Reset any property to
+  its default with one click.
+- **Live preview and device widths.** Preview the document at fill, laptop, tablet and phone
+  widths without leaving the editor.
+- **Generated Python.** The Code tab shows the export with line numbers, size and target
+  versions; copy it or save it as `app.py`.
+- **Five designed templates.** Login, Dashboard, Settings, Profile and Onboarding are real
+  compositions you can start from and edit, not screenshots.
+- **A document model that holds up.** Every edit is a command, so undo/redo is exact.
+  Property edits coalesce while typing. The document is validated on every change and the
+  diagnostics panel links each problem back to its node.
+- **Projects and recovery.** Save/open `.fvb.json`, recent-path memory, and a crash-safe
+  autosave that is offered back on the next launch.
 
-This repository includes the core architecture required by the TDD:
+![Preview mode](docs/screenshots/preview.png)
+![Code mode](docs/screenshots/code.png)
 
-- Widget tree model (`WidgetNode`) with slot-aware children
-- Widget registry and centralized enum mapping
-- Tree operations (insert/delete/move/reorder/wrap) with cycle prevention
-- Validation engine for export safety (including slot checking)
-- Code generation (`WidgetNode` → runnable Flet Python)
-- Project serialization, migrations, save/load with auto-backup
-- App state with snapshot-based undo/redo
-- Canvas hit-test engine with drop-zone detection
-- Unit test suite (10 tests) covering all core engine modules
+## Install
+
+Python 3.11 or newer.
+
+```bash
+git clone https://github.com/raffieeey/Flet-Visual-Builder.git
+cd Flet-Visual-Builder
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
 ## Run
 
 ```bash
-uv sync --locked --extra dev
-uv run --locked --extra dev flet-visual-builder
+flet-visual-builder                       # desktop window
+flet-visual-builder path/to/project.fvb.json
+flet-visual-builder --mode code           # open straight in the code view
+python -m flet_visual_builder             # same entry point
 ```
 
-## Test
+Browser target (optional extra):
 
 ```bash
-uv run --locked --extra dev python -m pytest -q
+pip install -e ".[web]"
+flet-visual-builder --web --port 8000
 ```
 
-### Design tab
-![Design tab](docs/screenshots/design_tab.png)
+The `web` extra pins FastAPI: `flet-web` 1.0.1 passes `openapi_prefix`, which newer
+Starlette releases removed.
 
-### Preview tab
-![Preview tab](docs/screenshots/preview_tab.png)
+## Templates
 
-### Code tab
-![Code tab](docs/screenshots/code_tab.png)
+![Template gallery](docs/screenshots/templates.png)
 
-## Changelog (from Codex baseline)
+New documents start from a template gallery. Each template is built from the same catalogue
+the editor exposes, so what you see is what you can edit.
 
-### Bug fixes
-- **Code generator: event handlers quoted as strings** — `on_click='handler'` now correctly renders as `on_click=handler` (bare function reference)
-- **Code generator: handler stubs after main()** — stubs now defined before `main()` so names are in scope when the control tree is built
-- **Code generator: bool/int type ambiguity** — `isinstance(True, int)` is True in Python; bool check now runs before int check
-- **Validator: wrong slot not detected** — children assigned to undeclared slots (e.g. `slot="controls"` under Container) now raise `ValidationError`
-- **tree_ops.move_node: no cycle detection** — moving a node into its own descendant now returns False instead of corrupting the tree
-- **WidgetNode.clone: duplicate IDs** — `clone()` now generates fresh unique IDs by default for copy-paste safety; `clone(deep_new_ids=False)` preserves IDs for undo snapshots
+## What the export looks like
 
-### Improvements
-- **tree_renderer: removed eval()** — replaced with safe `getattr` chain on the `flet` module
-- **tree_renderer: slot-aware child assignment** — uses registry slot definitions instead of `hasattr` heuristics
-- **tree_renderer: skips event props** — event handler name strings are not passed to Flet constructors in preview
-- **serializer: removed redundant asdict()** — `node_to_dict` now builds dicts manually instead of calling `dataclasses.asdict` then overwriting children
-- **hit_test: drop zone detection** — added `DropZone` enum (BEFORE/INSIDE/AFTER) based on TDD spec (top 25%/middle 50%/bottom 25%)
-- **hit_test: accepts_children flag** — leaf nodes fall back to AFTER when pointer is in the middle zone
-- **Test suite** — 10 tests covering engine bug fixes, edge cases, and a Flet 1.0 removed-API guard
+```python
+"""Flet Visual Builder export. Target: 1.0.1."""
+
+import flet as ft
+
+
+def build_ui() -> ft.Control:
+    return ft.Column(
+        alignment=ft.MainAxisAlignment.START,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        spacing=0,
+        controls=[
+            ft.Container(
+                padding=ft.Padding(left=40, top=36, right=40, bottom=36),
+                bgcolor="#0F172A",
+                content=ft.Column(
+                    alignment=ft.MainAxisAlignment.START,
+                    horizontal_alignment=ft.CrossAxisAlignment.START,
+                    spacing=8,
+                    controls=[
+                        ft.Text(
+                            value="Flet Visual Builder",
+                            size=28,
+                            weight=ft.FontWeight.BOLD,
+                            color="#FFFFFF",
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    )
+
+
+def main(page: ft.Page) -> None:
+    page.title = "Welcome to Flet Visual Builder"
+    page.add(build_ui())
+
+
+if __name__ == "__main__":
+    ft.run(main)
+```
+
+Event handlers become real function stubs with matching signatures, so wiring behaviour is a
+normal Python edit.
+
+## Keyboard shortcuts
+
+| Keys | Action |
+| --- | --- |
+| `Ctrl/Cmd + Z` | Undo |
+| `Ctrl/Cmd + Shift + Z`, `Ctrl/Cmd + Y` | Redo |
+| `Ctrl/Cmd + S` | Save |
+| `Ctrl/Cmd + O` | Open |
+| `Ctrl/Cmd + D` | Duplicate the selection |
+| `Delete` / `Backspace` | Delete the selection (ignored while typing in a field) |
+| `Esc` | Clear the selection |
+
+## How it is built
+
+```
+command  ->  pure reducer  ->  document snapshot  ->  lowering  ->  control plan
+                                                   |-> runtime renderer (preview, canvas)
+                                                   |-> code generator  (export)
+```
+
+- `model/` is a pure command reducer over immutable documents; no Flet import.
+- `catalogue/` declares every widget, its typed properties, slots and events.
+- `engine/` lowers a document into a control plan and renders or generates code from it.
+- `state/` adds undo/redo, revision checks and command coalescing around the reducer.
+- `persistence/` handles the JSON format, migrations and assets.
+- `ui/` is the editor; `ui/theme.py` holds the design tokens every panel uses.
+
+The separation is enforced by tests: model, catalogue, state and persistence must not import
+Flet, and code generation is validated as text (AST + compile), never by executing it.
+
+More detail in [docs/architecture.md](docs/architecture.md).
+
+## Development
+
+```bash
+python -m pytest -q          # 572 tests
+python -m black --check src tests
+```
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the module conventions and the verified
+Flet 1.0.1 API rules that keep the editor from drifting.
+
+## Project file
+
+`.fvb.json` is a versioned document (`schema_version: 2`) holding the page spec, the node
+graph, slots, event bindings and embedded assets. Older 0.x files load through the migration
+path.
+
+## Known limits
+
+- One page per document; there is no multi-route navigation editor yet.
+- Image sources are URLs or the built-in placeholder; binary asset import is not exposed in
+  the UI even though the document model supports it.
+- Drop placement is a three-zone model (before / inside / after the hovered node) rather than
+  free-form absolute positioning.
+- The desktop build is the primary target; the browser build works but has not been tuned for
+  phone-sized viewports.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

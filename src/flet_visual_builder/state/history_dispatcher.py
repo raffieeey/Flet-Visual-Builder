@@ -153,9 +153,7 @@ class HistoryDispatcher:
             total += structural_snapshot_bytes(project)
         return total
 
-    def execute(
-        self, command: CommandADT, *, expected_revision: int
-    ) -> CommandResult:
+    def execute(self, command: CommandADT, *, expected_revision: int) -> CommandResult:
         current = self._snapshot
         if expected_revision != current.revision:
             return self._reject(
@@ -301,7 +299,10 @@ class HistoryDispatcher:
         return 0 <= idle <= self._coalesce_idle_s
 
     def _remember_coalesce(self, command: CommandADT, now: float) -> None:
-        if isinstance(command, (SetProperty, UnsetProperty)) and command.gesture_id is not None:
+        if (
+            isinstance(command, (SetProperty, UnsetProperty))
+            and command.gesture_id is not None
+        ):
             self._coalesce_key = (command.gesture_id, command.node_id, command.name)
             self._coalesce_time = now
             return

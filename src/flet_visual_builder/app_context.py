@@ -26,7 +26,10 @@ from typing import Callable, Iterable, Protocol, Sequence, runtime_checkable
 
 import flet as ft
 
-from flet_visual_builder.catalogue import FrozenCatalogue, catalogue as default_catalogue
+from flet_visual_builder.catalogue import (
+    FrozenCatalogue,
+    catalogue as default_catalogue,
+)
 from flet_visual_builder.contracts import (
     CommandADT,
     CommandResult,
@@ -44,8 +47,10 @@ from flet_visual_builder.contracts import (
     LoweringResult,
     Node,
     NodeId,
+    PasteNodes,
     Project,
     Redo,
+    RenameProject,
     ReplaceProject,
     SetEvent,
     SetProperty,
@@ -71,11 +76,11 @@ class Refresh:
     """Reasons passed to ``Panel.refresh``."""
 
     ALL = "all"
-    DOCUMENT = "document"      # node tree or properties changed
-    SELECTION = "selection"    # selection changed, document unchanged
-    PROJECT = "project"        # a different document was adopted
-    CHROME = "chrome"          # dirty/save/undo state only
-    LAYOUT = "layout"          # canvas width or active tab changed
+    DOCUMENT = "document"  # node tree or properties changed
+    SELECTION = "selection"  # selection changed, document unchanged
+    PROJECT = "project"  # a different document was adopted
+    CHROME = "chrome"  # dirty/save/undo state only
+    LAYOUT = "layout"  # canvas width or active tab changed
     STATUS = "status"
 
 
@@ -131,7 +136,9 @@ class Workspace:
         self.lowerer = Lowering()
         self.codegen = Codegen()
         self._panels: list[Panel] = []
-        self._dispatcher = HistoryDispatcher(DocumentSnapshot(project=project, revision=0))
+        self._dispatcher = HistoryDispatcher(
+            DocumentSnapshot(project=project, revision=0)
+        )
         self._plan_revision = -1
         self._plan_result: LoweringResult | None = None
         self._artifact_revision = -1
@@ -172,7 +179,9 @@ class Workspace:
         return self.catalogue.widgets[type_id]
 
     def slots_of(self, node: Node) -> dict[str, Sequence[NodeId]]:
-        return {name: node.slots.get(name, ()) for name in self.spec(node.type_id).slots}
+        return {
+            name: node.slots.get(name, ()) for name in self.spec(node.type_id).slots
+        }
 
     def default_slot(self, type_id: str) -> str | None:
         slots = self.catalogue.widgets[type_id].slots
@@ -222,7 +231,9 @@ class Workspace:
     # ── projections ───────────────────────────────────────────────────
     def plan_result(self) -> LoweringResult:
         if self._plan_result is None or self._plan_revision != self.revision:
-            self._plan_result = self.lowerer.lower_project(self.snapshot, self.catalogue)
+            self._plan_result = self.lowerer.lower_project(
+                self.snapshot, self.catalogue
+            )
             self._plan_revision = self.revision
         return self._plan_result
 
@@ -230,7 +241,20 @@ class Workspace:
         return self.plan_result().plan
 
     def diagnostics(self) -> tuple[Diagnostic, ...]:
-        return self.plan_result().diagnostics
+        """Lowering plus generation diagnostics, de-duplicated by code/message/node."""
+        diagnostics = list(self.plan_result().diagnostics)
+        artifact = self._artifact
+        if artifact is not None and self._artifact_revision == self.revision:
+            diagnostics.extend(artifact.diagnostics)
+        seen: set[tuple[str, str, str]] = set()
+        unique: list[Diagnostic] = []
+        for item in diagnostics:
+            key = (item.code, item.message, item.node_id or "")
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(item)
+        return tuple(unique)
 
     def artifact(self) -> GeneratedArtifact | None:
         if self._artifact is None or self._artifact_revision != self.revision:
@@ -278,7 +302,9 @@ class Workspace:
         self._id_counters[prefix] = self._id_counters.get(prefix, 0) + 1
         return f"{prefix}-{self._id_counters[prefix]}"
 
-    def dispatch(self, command: CommandADT, *, reason: str = Refresh.DOCUMENT) -> CommandResult:
+    def dispatch(
+        self, command: CommandADT, *, reason: str = Refresh.DOCUMENT
+    ) -> CommandResult:
         result = self._dispatcher.execute(command, expected_revision=self.revision)
         if result.status is CommandStatus.REJECTED:
             self.report(result.diagnostics)
@@ -313,13 +339,17 @@ class Workspace:
             events={},
         )
 
-    def insert(self, type_id: str, parent_id: NodeId, slot_name: str, index: int) -> CommandResult:
+    def insert(
+        self, type_id: str, parent_id: NodeId, slot_name: str, index: int
+    ) -> CommandResult:
         node = self.new_node(type_id)
         result = self.dispatch(
             InsertNode(
                 command_id=self._command_id("insert"),
                 node=node,
-                destination=DropIntent(parent_id=parent_id, slot_name=slot_name, index=index),
+                destination=DropIntent(
+                    parent_id=parent_id, slot_name=slot_name, index=index
+                ),
             )
         )
         if result.status is CommandStatus.COMMITTED:
@@ -327,7 +357,9 @@ class Workspace:
             self.refresh(Refresh.SELECTION)
         return result
 
-    def insert_relative(self, type_id: str, anchor: NodeId, *, inside: bool, after: bool = False) -> CommandResult:
+    def insert_relative(
+        self, type_id: str, anchor: NodeId, *, inside: bool, after: bool = False
+    ) -> CommandResult:
         """Insert next to an existing node, following the reducer's slot rules."""
         anchor_node = self.node(anchor)
         if anchor_node is None:
@@ -338,29 +370,49 @@ class Workspace:
             return self.insert(type_id, anchor_node.id, slot, index)
         parent = self.parent_of(anchor_node.id)
         if parent is None:
-            return self.insert(type_id, anchor_node.id, self.default_slot(anchor_node.type_id) or "controls", 0)
+            return self.insert(
+                type_id,
+                anchor_node.id,
+                self.default_slot(anchor_node.type_id) or "controls",
+                0,
+            )
         parent_id, slot_name, index = parent
         return self.insert(type_id, parent_id, slot_name, index + (1 if after else 0))
 
     def delete(self, node_id: NodeId) -> CommandResult:
         parent = self.parent_of(node_id)
-        result = self.dispatch(DeleteNode(command_id=self._command_id("delete"), node_id=node_id))
+        result = self.dispatch(
+            DeleteNode(command_id=self._command_id("delete"), node_id=node_id)
+        )
         if result.status is CommandStatus.COMMITTED:
-            self.editor.selection = parent[0] if parent else (self.project.root_ids[0] if self.project.root_ids else None)
+            self.editor.selection = (
+                parent[0]
+                if parent
+                else (self.project.root_ids[0] if self.project.root_ids else None)
+            )
             self.refresh(Refresh.SELECTION)
         return result
 
-    def move(self, node_id: NodeId, parent_id: NodeId, slot_name: str, index: int) -> CommandResult:
+    def move(
+        self, node_id: NodeId, parent_id: NodeId, slot_name: str, index: int
+    ) -> CommandResult:
         """Move a node. ``index`` is the raw position in the target list before removal."""
         source = self.parent_of(node_id)
         destination_index = index
-        if source is not None and source[0] == parent_id and source[1] == slot_name and source[2] < index:
+        if (
+            source is not None
+            and source[0] == parent_id
+            and source[1] == slot_name
+            and source[2] < index
+        ):
             destination_index -= 1
         result = self.dispatch(
             MoveNode(
                 command_id=self._command_id("move"),
                 node_id=node_id,
-                destination=DropIntent(parent_id=parent_id, slot_name=slot_name, index=destination_index),
+                destination=DropIntent(
+                    parent_id=parent_id, slot_name=slot_name, index=destination_index
+                ),
             )
         )
         if result.status is CommandStatus.COMMITTED:
@@ -389,24 +441,28 @@ class Workspace:
         parent = self.parent_of(node_id)
         if source is None or parent is None:
             return self._noop("duplicate")
-        clone = self._clone_subtree(source)
+        clones = self._clone_subtree(source)
         parent_id, slot_name, index = parent
         result = self.dispatch(
-            InsertNode(
+            PasteNodes(
                 command_id=self._command_id("duplicate"),
-                node=clone,
-                destination=DropIntent(parent_id=parent_id, slot_name=slot_name, index=index + 1),
+                nodes=clones,
+                destination=DropIntent(
+                    parent_id=parent_id, slot_name=slot_name, index=index + 1
+                ),
             )
         )
         if result.status is CommandStatus.COMMITTED:
-            self.editor.selection = clone.id
+            self.editor.selection = clones[-1].id
             self.refresh(Refresh.SELECTION)
         return result
 
-    def _clone_subtree(self, source: Node) -> Node:
-        """Deep copy with fresh ids; returns the inserted-root clone."""
+    def _clone_subtree(self, source: Node) -> tuple[Node, ...]:
+        """Deep copy with fresh ids; the returned root is last in the tuple."""
         import copy as _copy
         from dataclasses import replace as _replace
+
+        collected: list[Node] = []
 
         def walk(node: Node) -> Node:
             fresh = self.new_node(node.type_id)
@@ -419,14 +475,22 @@ class Workspace:
                         continue
                     cloned_children.append(walk(child).id)
                 slots[slot_name] = tuple(cloned_children)
-            return _replace(
+            events = {
+                name: EventSymbol(event_symbol_name(fresh.id, name))
+                for name in node.events
+            }
+            clone = _replace(
                 fresh,
                 props=_copy.deepcopy(dict(node.props)),
                 slots=slots,
-                events=dict(node.events),
+                events=events,
             )
+            collected.append(clone)
+            return clone
 
-        return walk(source)
+        root = walk(source)
+        collected.remove(root)
+        return (*collected, root)
 
     def set_property(self, node_id: NodeId | None, name: str, value) -> CommandResult:
         return self.dispatch(
@@ -440,11 +504,17 @@ class Workspace:
 
     def unset_property(self, node_id: NodeId | None, name: str) -> CommandResult:
         return self.dispatch(
-            UnsetProperty(command_id=self._command_id("unset"), node_id=node_id, name=name)
+            UnsetProperty(
+                command_id=self._command_id("unset"), node_id=node_id, name=name
+            )
         )
 
-    def set_event(self, node_id: NodeId, event_name: str, enabled: bool = True) -> CommandResult:
-        symbol = EventSymbol(event_symbol_name(node_id, event_name)) if enabled else None
+    def set_event(
+        self, node_id: NodeId, event_name: str, enabled: bool = True
+    ) -> CommandResult:
+        symbol = (
+            EventSymbol(event_symbol_name(node_id, event_name)) if enabled else None
+        )
         return self.dispatch(
             SetEvent(
                 command_id=self._command_id("event"),
@@ -455,18 +525,8 @@ class Workspace:
         )
 
     def rename_project(self, name: str) -> CommandResult:
-        cleaned = name.strip() or "Untitled"
         return self.dispatch(
-            ReplaceProject(
-                command_id=self._command_id("rename"),
-                project=Project(
-                    name=cleaned,
-                    page=self.project.page,
-                    root_ids=self.project.root_ids,
-                    nodes=self.project.nodes,
-                    assets=self.project.assets,
-                ),
-            )
+            RenameProject(command_id=self._command_id("rename"), name=name)
         )
 
     def undo(self) -> CommandResult:
@@ -505,6 +565,10 @@ class Workspace:
 
     def device_width(self) -> int | None:
         return DEVICE_WIDTHS.get(self.device)
+
+    def set_text_focus(self, focused: bool) -> None:
+        """Track text-input focus so destructive shortcuts stay inert while typing."""
+        self.editor.text_focus = focused
 
     def set_status(self, message: str) -> None:
         self.editor.set_status(message)
@@ -564,8 +628,12 @@ class Workspace:
             self.report(result.diagnostics)
         return result
 
-    def adopt(self, project: Project, *, path: str | Path | None = None, dirty: bool = False) -> None:
-        self._dispatcher = HistoryDispatcher(DocumentSnapshot(project=project, revision=0))
+    def adopt(
+        self, project: Project, *, path: str | Path | None = None, dirty: bool = False
+    ) -> None:
+        self._dispatcher = HistoryDispatcher(
+            DocumentSnapshot(project=project, revision=0)
+        )
         self._id_counters.clear()
         self.invalidate()
         self.session.set_path(path, saved=not dirty)

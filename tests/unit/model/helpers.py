@@ -57,9 +57,7 @@ def make_snapshot(
 
 
 def column_with_texts(count: int, *, revision: int = 1) -> DocumentSnapshot:
-    texts = [
-        make_node(f"t{i}", "Text", props={"value": str(i)}) for i in range(count)
-    ]
+    texts = [make_node(f"t{i}", "Text", props={"value": str(i)}) for i in range(count)]
     column = make_node(
         "root",
         "Column",
@@ -85,9 +83,7 @@ def nested_containers(depth: int, *, revision: int = 1) -> DocumentSnapshot:
     # depth=1 is just the leaf as root; depth=2 is container → leaf.
     for level in range(depth - 1, 0, -1):
         node_id = "root" if level == 1 else f"c{level}"
-        nodes.append(
-            make_node(node_id, "Container", slots={"content": (child_id,)})
-        )
+        nodes.append(make_node(node_id, "Container", slots={"content": (child_id,)}))
         child_id = node_id
     nodes.reverse()
     return make_snapshot(*nodes, root_ids=(nodes[0].id,), revision=revision)

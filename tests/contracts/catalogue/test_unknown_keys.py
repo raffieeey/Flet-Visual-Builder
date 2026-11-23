@@ -1,4 +1,5 @@
 """Unknown persisted keys reject with Severity.ERROR naming the key."""
+
 from __future__ import annotations
 
 import pytest
@@ -23,6 +24,4 @@ def test_undeclared_property_is_error_naming_the_key(type_id: str) -> None:
 def test_unknown_page_property_is_error_naming_the_key() -> None:
     key = "clipboard"
     diags = catalogue.validate_page({key: "x"})
-    assert any(
-        d.severity is Severity.ERROR and key in d.message for d in diags
-    )
+    assert any(d.severity is Severity.ERROR and key in d.message for d in diags)

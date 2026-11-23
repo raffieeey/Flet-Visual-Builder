@@ -1,4 +1,5 @@
 """PageSpec matches TDD v2 §2.4.5."""
+
 from __future__ import annotations
 
 from flet_visual_builder.catalogue import catalogue
@@ -14,7 +15,14 @@ def test_page_keys_and_defaults() -> None:
         "theme": ("theme", {"color_scheme_seed": "INDIGO"}, True),
         "appbar": ("appbar", None, True),
     }
-    assert set(catalogue.page_properties) == set(expected)
+    # Additive page properties are permitted; the original contract stays fixed.
+    assert set(expected) <= set(catalogue.page_properties)
+    assert set(catalogue.page_properties) - set(expected) <= {
+        "bgcolor",
+        "adaptive",
+        "rtl",
+        "horizontal_alignment",
+    }
     for name, (codec_id, default, nullable) in expected.items():
         prop = catalogue.page_properties[name]
         assert prop.codec_id == codec_id

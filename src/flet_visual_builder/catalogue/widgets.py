@@ -1,4 +1,5 @@
 """Sixteen-entry WidgetSpec catalogue (TDD v2 §2.4.2–§2.4.3)."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -41,12 +42,8 @@ SHARED: tuple[PropertySpec, ...] = (
     _p("visible", "boolean", True, nullable=False),
 )
 
-_CONTENT_SLOT = SlotSpec(
-    name="content", minimum=0, maximum=1, accepted_types=None
-)
-_CONTROLS_SLOT = SlotSpec(
-    name="controls", minimum=0, maximum=None, accepted_types=None
-)
+_CONTENT_SLOT = SlotSpec(name="content", minimum=0, maximum=1, accepted_types=None)
+_CONTROLS_SLOT = SlotSpec(name="controls", minimum=0, maximum=None, accepted_types=None)
 _ERROR_CONTENT_SLOT = SlotSpec(
     name="error_content", minimum=0, maximum=1, accepted_types=None
 )
@@ -64,11 +61,12 @@ def _widget(
     extras: tuple[PropertySpec, ...],
     slots: Mapping[str, SlotSpec] | None = None,
     events: frozenset[str] = frozenset(),
+    omit_shared: frozenset[str] = frozenset(),
 ) -> WidgetSpec:
     return WidgetSpec(
         type_id=type_id,
         constructor=SymbolRef((type_id,)),
-        properties=_merge(*extras),
+        properties={k: v for k, v in _merge(*extras).items() if k not in omit_shared},
         slots=dict(slots) if slots else {},
         events=events,
     )
@@ -271,3 +269,269 @@ WIDGET_ORDER: tuple[str, ...] = (
     "ListView",
     "TextButton",
 )
+
+# Additional entries use only fields exposed by Flet 1.0.1.
+_NO_SIZE = frozenset({"width", "height"})
+_MULTI_DEST = SlotSpec("destinations", 0, None, frozenset({"NavigationBarDestination"}))
+WIDGET_SPECS.update(
+    {
+        "Stack": _widget(
+            "Stack",
+            (_p("alignment", "enum.Alignment", "CENTER", nullable=False),),
+            {"controls": _CONTROLS_SLOT},
+        ),
+        "GridView": _widget(
+            "GridView",
+            (
+                _p("height", "nonneg_number", 240, nullable=True),
+                _p("spacing", "nonneg_number", 10, nullable=False),
+                _p("run_spacing", "nonneg_number", 10, nullable=False),
+                _p("runs_count", "positive_integer", 2, nullable=False),
+            ),
+            {"controls": _CONTROLS_SLOT},
+        ),
+        "ResponsiveRow": _widget(
+            "ResponsiveRow",
+            (
+                _p("spacing", "nonneg_number", 10, nullable=False),
+                _p("run_spacing", "nonneg_number", 10, nullable=False),
+            ),
+            {"controls": _CONTROLS_SLOT},
+        ),
+        "VerticalDivider": _widget(
+            "VerticalDivider",
+            (
+                _p("thickness", "nonneg_number", 1, nullable=True),
+                _p("color", "color", U, nullable=True),
+            ),
+            omit_shared=frozenset({"height"}),
+        ),
+        "ProgressRing": _widget(
+            "ProgressRing",
+            (
+                _p("value", "unit_interval", 0.5, nullable=True),
+                _p("stroke_width", "nonneg_number", 4, nullable=False),
+                _p("color", "color", U, nullable=True),
+            ),
+        ),
+        "CircleAvatar": _widget(
+            "CircleAvatar",
+            (
+                _p("radius", "nonneg_number", 20, nullable=True),
+                _p("bgcolor", "color", U, nullable=True),
+            ),
+            {"content": _CONTENT_SLOT},
+        ),
+        "Chip": _widget(
+            "Chip",
+            (
+                _p("label", "string", "Chip", nullable=False),
+                _p("selected", "boolean", False, nullable=False),
+            ),
+            {
+                "label": SlotSpec("label", 0, 1, None),
+                "leading": SlotSpec("leading", 0, 1, None),
+            },
+            frozenset({"on_click", "on_select", "on_delete"}),
+        ),
+        "ListTile": _widget(
+            "ListTile",
+            (
+                _p("title", "string", "List tile", nullable=True),
+                _p("subtitle", "string", U, nullable=True),
+                _p("selected", "boolean", False, nullable=False),
+            ),
+            {
+                name: SlotSpec(name, 0, 1, None)
+                for name in ("title", "subtitle", "leading", "trailing")
+            },
+            frozenset({"on_click", "on_long_press"}),
+        ),
+        "Markdown": _widget(
+            "Markdown",
+            (
+                _p("value", "string", "Markdown", nullable=False),
+                _p("selectable", "boolean", False, nullable=False),
+            ),
+            events=frozenset({"on_tap_link"}),
+        ),
+        "FilledButton": _widget(
+            "FilledButton",
+            (
+                _p("content", "string", "Filled button", nullable=True),
+                _p("icon", "icon", U, nullable=True),
+            ),
+            {"content": _CONTENT_SLOT},
+            frozenset({"on_click"}),
+        ),
+        "OutlinedButton": _widget(
+            "OutlinedButton",
+            (
+                _p("content", "string", "Outlined button", nullable=True),
+                _p("icon", "icon", U, nullable=True),
+            ),
+            {"content": _CONTENT_SLOT},
+            frozenset({"on_click"}),
+        ),
+        "FloatingActionButton": _widget(
+            "FloatingActionButton",
+            (
+                _p("icon", "icon", "ADD", nullable=True),
+                _p("mini", "boolean", False, nullable=False),
+                _p("bgcolor", "color", U, nullable=True),
+            ),
+            {"content": _CONTENT_SLOT},
+            frozenset({"on_click"}),
+        ),
+        "Radio": _widget(
+            "Radio",
+            (
+                _p("value", "string", "option", nullable=True),
+                _p("label", "string", "Radio", nullable=True),
+            ),
+        ),
+        "Slider": _widget(
+            "Slider",
+            (
+                _p("value", "unit_interval", 0.5, nullable=False),
+                _p("label", "string", U, nullable=True),
+            ),
+            events=frozenset({"on_change", "on_change_start", "on_change_end"}),
+        ),
+        "Dropdown": _widget(
+            "Dropdown",
+            (
+                _p("label", "string", "Choose", nullable=True),
+                _p("options", "dropdown_options", (), nullable=False),
+                _p("value", "string", U, nullable=True),
+            ),
+            events=frozenset({"on_select"}),
+        ),
+        "ExpansionTile": _widget(
+            "ExpansionTile",
+            (
+                _p("title", "string", "Expand", nullable=False),
+                _p("expanded", "boolean", False, nullable=False),
+            ),
+            {"controls": _CONTROLS_SLOT, "title": SlotSpec("title", 0, 1, None)},
+            frozenset({"on_change"}),
+        ),
+        "NavigationBar": _widget(
+            "NavigationBar",
+            (
+                _p(
+                    "destinations",
+                    "navigation_destinations",
+                    (
+                        {"icon": "HOME", "label": "Home"},
+                        {"icon": "SEARCH", "label": "Search"},
+                    ),
+                    nullable=False,
+                ),
+                _p("selected_index", "nonneg_integer", 0, nullable=False),
+            ),
+            {"destinations": _MULTI_DEST},
+            frozenset({"on_change"}),
+        ),
+        "NavigationBarDestination": _widget(
+            "NavigationBarDestination",
+            (
+                _p("icon", "icon", "HOME", nullable=False, required=True),
+                _p("label", "string", "Home", nullable=True),
+            ),
+            omit_shared=_NO_SIZE,
+        ),
+        "SegmentedButton": _widget(
+            "SegmentedButton",
+            (
+                _p(
+                    "segments",
+                    "segments",
+                    ({"value": "one", "label": "One"},),
+                    nullable=False,
+                    required=True,
+                ),
+                _p("allow_empty_selection", "boolean", True, nullable=False),
+            ),
+            events=frozenset({"on_change"}),
+        ),
+        "DropdownOption": _widget(
+            "DropdownOption",
+            (_p("text", "string", "Option", nullable=True),),
+            omit_shared=_NO_SIZE,
+        ),
+        "Segment": _widget(
+            "Segment",
+            (
+                _p("value", "string", "one", nullable=False, required=True),
+                _p("label", "string", "One", nullable=True),
+                _p("icon", "icon", U, nullable=True),
+            ),
+            omit_shared=_NO_SIZE,
+        ),
+        "Tab": _widget(
+            "Tab",
+            (
+                _p("label", "string", "Tab", nullable=True),
+                _p("icon", "icon", U, nullable=True),
+            ),
+            omit_shared=frozenset({"width"}),
+        ),
+    }
+)
+WIDGET_SPECS.update(
+    {
+        "SafeArea": _widget(
+            "SafeArea",
+            (
+                _p("content", "empty_control", {"kind": "empty"}, nullable=False),
+                _p("minimum_padding", "padding", 0, nullable=False),
+            ),
+            {"content": _CONTENT_SLOT},
+        ),
+        "RadioGroup": _widget(
+            "RadioGroup",
+            (
+                _p("content", "empty_control", {"kind": "empty"}, nullable=False),
+                _p("value", "string", U, nullable=True),
+            ),
+            {"content": _CONTENT_SLOT},
+            frozenset({"on_change"}),
+            omit_shared=_NO_SIZE,
+        ),
+    }
+)
+WIDGET_SPECS.update(
+    {
+        "TabBar": _widget(
+            "TabBar",
+            (
+                _p("tabs", "tabs", ({"label": "Tab"},), nullable=False),
+                _p("scrollable", "boolean", True, nullable=False),
+            ),
+            {"tabs": SlotSpec("tabs", 0, None, frozenset({"Tab"}))},
+            frozenset({"on_click"}),
+        ),
+        "TabBarView": _widget(
+            "TabBarView",
+            (
+                _p(
+                    "controls", "tab_views", ({"value": "Tab content"},), nullable=False
+                ),
+                _p("height", "nonneg_number", 200, nullable=True),
+            ),
+            {"controls": _CONTROLS_SLOT},
+        ),
+        "Tabs": _widget(
+            "Tabs",
+            (
+                _p("content", "tabs_content", {"kind": "empty"}, nullable=False),
+                _p("length", "positive_integer", 1, nullable=False),
+                _p("selected_index", "nonneg_integer", 0, nullable=False),
+            ),
+            {"content": _CONTENT_SLOT},
+            frozenset({"on_change"}),
+        ),
+    }
+)
+WIDGET_ORDER += tuple(name for name in WIDGET_SPECS if name not in WIDGET_ORDER)

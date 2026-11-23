@@ -122,6 +122,92 @@ def test_app_build_mounts_every_panel(tmp_path, monkeypatch) -> None:
     shell_root = page.controls[0]
     assert shell_root is not None
     # Every region host received a control.
-    for name in ("toolbar", "palette", "tree", "inspector", "design", "preview", "code", "diagnostics"):
+    for name in (
+        "toolbar",
+        "palette",
+        "tree",
+        "inspector",
+        "design",
+        "preview",
+        "code",
+        "diagnostics",
+    ):
         host = getattr(ws._panels[0].shell.mounts, name)
         assert host.content is not None, name
+
+
+def test_rename_preserves_undo_history(tmp_path: Path) -> None:
+    ws = make_workspace(tmp_path)
+    ws.insert("Text", ws.project.root_ids[0], "controls", 0)
+    depth_before = ws.dispatcher.undo_count
+    ws.rename_project("Renamed")
+    assert ws.project.name == "Renamed"
+    assert ws.dispatcher.undo_count == depth_before + 1
+    ws.undo()
+    assert ws.project.name == "Welcome"
+
+
+def test_duplicate_container_is_atomic(tmp_path: Path) -> None:
+    ws = make_workspace(tmp_path)
+    before = set(ws.project.nodes)
+    result = ws.duplicate("header")
+    assert result.status is CommandStatus.COMMITTED, [
+        d.message for d in result.diagnostics
+    ]
+    added = set(ws.project.nodes) - before
+    assert len(added) >= 2, added
+    clone_root = ws.project.nodes[ws.editor.selection]
+    assert clone_root.type_id == "Container"
+    assert clone_root.slots["content"], "cloned container lost its children"
+    ws.undo()
+    assert set(ws.project.nodes) == before
+
+
+def test_diagnostics_are_deduplicated(tmp_path: Path) -> None:
+    ws = make_workspace(tmp_path)
+    diagnostics = ws.diagnostics()
+    assert diagnostics == ()
+    keys = [(d.code, d.message, d.node_id or "") for d in ws.diagnostics()]
+    assert len(keys) == len(set(keys))
+
+
+def test_duplicate_rewrites_event_handler_names(tmp_path: Path) -> None:
+    ws = make_workspace(tmp_path)
+    root = ws.project.root_ids[0]
+    result = ws.insert("Button", root, "controls", 0)
+    button_id = ws.editor.selection
+    ws.set_event(button_id, "on_click", True)
+    original = ws.project.nodes[button_id].events["on_click"].name
+
+    ws.duplicate(button_id)
+    clone_id = ws.editor.selection
+    clone_symbol = ws.project.nodes[clone_id].events["on_click"].name
+    assert clone_id != button_id
+    assert clone_symbol != original
+    assert clone_id in clone_symbol
+
+
+def test_boot_recovers_autosaved_work(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    from flet_visual_builder.persistence.json_repository import JsonRepository
+    from flet_visual_builder.ui.app import _boot_project
+
+    session = ProjectSession(base=tmp_path)
+    recovered = replace(starter_project(), name="Recovered draft")
+    assert session.write_autosave(JsonRepository(), recovered, 5) is True
+
+    project, dirty, notice = _boot_project(None, session)
+    assert project.name == "Recovered draft"
+    assert dirty is True
+    assert "Recovered" in notice
+
+
+def test_boot_reports_a_missing_project_file(tmp_path: Path) -> None:
+    from flet_visual_builder.ui.app import _boot_project
+
+    session = ProjectSession(base=tmp_path / "empty")
+    project, dirty, notice = _boot_project(tmp_path / "nope.fvb.json", session)
+    assert project.name == "Welcome"
+    assert dirty is False
+    assert "Could not open" in notice

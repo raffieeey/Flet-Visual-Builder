@@ -4,6 +4,7 @@ Black is invoked in-process through ``black.format_str`` and an explicit
 ``black.Mode``. An unavailable or unpinned Black installation is an error;
 formatting is never skipped.
 """
+
 from __future__ import annotations
 
 import black

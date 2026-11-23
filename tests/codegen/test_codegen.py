@@ -1,4 +1,5 @@
 """Deterministic generation: AST, import, construction, PageSpec, events."""
+
 from __future__ import annotations
 
 import ast
@@ -144,7 +145,9 @@ def test_property_order_follows_spec_not_dict() -> None:
         "size": 24,
     }
     source = generate(make_plan(make_node_plan("label", "Text", props=props)))
-    positions = [source.index(f"{name}=") for name in ("value", "size", "weight", "color")]
+    positions = [
+        source.index(f"{name}=") for name in ("value", "size", "weight", "color")
+    ]
     assert positions == sorted(positions)
     assert spec_order.index("value") < spec_order.index("size")
     assert spec_order.index("size") < spec_order.index("weight")
@@ -189,7 +192,9 @@ def test_event_stubs_use_handle_form_and_empty_bodies() -> None:
     assert "handle_save_click" in source
     tree = parse(source)
     main = next(
-        node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "main"
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "main"
     )
     stubs = [node for node in main.body if isinstance(node, ast.FunctionDef)]
     assert [stub.name for stub in stubs] == ["handle_reset_click", "handle_save_click"]
@@ -201,7 +206,9 @@ def test_event_stubs_use_handle_form_and_empty_bodies() -> None:
     assert "e.control" not in source
 
 
-def test_import_does_not_call_ft_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_import_does_not_call_ft_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     def boom(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("ft.run must not be called")
 
@@ -227,8 +234,10 @@ def test_all_catalogue_entries_generate() -> None:
     parse(source)
     for type_id in WIDGET_ORDER:
         assert f"ft.{type_id}(" in source
-    assert len(WIDGET_ORDER) == 16
-    assert len(catalogue.widgets) == 16
+    from tests.contracts.catalogue.expected import WIDGET_ORDER as ORIGINAL_ORDER
+
+    assert WIDGET_ORDER[: len(ORIGINAL_ORDER)] == ORIGINAL_ORDER
+    assert len(catalogue.widgets) >= 36
 
 
 def test_all_catalogue_entries_construct(tmp_path: Path) -> None:
@@ -237,7 +246,7 @@ def test_all_catalogue_entries_construct(tmp_path: Path) -> None:
     root = construct(module)
     assert isinstance(root, ft.Column)
     assert root.controls is not None
-    assert len(root.controls) == 16
+    assert len(root.controls) == len(WIDGET_ORDER)
 
 
 @pytest.mark.parametrize("type_id", WIDGET_ORDER)
@@ -285,9 +294,7 @@ def test_invalid_missing_child_returns_empty_source() -> None:
 
 
 def test_invalid_cycle_returns_empty_source() -> None:
-    plan = make_plan(
-        make_node_plan("root", "Container", slots={"content": ("root",)})
-    )
+    plan = make_plan(make_node_plan("root", "Container", slots={"content": ("root",)}))
     artifact = GENERATOR.generate_python(plan, OPTIONS)
     assert artifact.source == ""
     assert any(d.code == "CODEGEN_CYCLE" for d in artifact.diagnostics)
@@ -302,7 +309,7 @@ def test_invalid_unknown_page_property_returns_empty_source() -> None:
         document_sha256=plan.document_sha256,
         target_flet=plan.target_flet,
         catalogue_version=plan.catalogue_version,
-        page_properties={"bgcolor": LiteralValue("INDIGO")},
+        page_properties={"window": LiteralValue("INDIGO")},
         root_ids=plan.root_ids,
         nodes=plan.nodes,
         assets=plan.assets,

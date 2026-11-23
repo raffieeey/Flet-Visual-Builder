@@ -1,4 +1,5 @@
 """Supplementary validation rules (TDD v2 §2.4.3 lines 1637-1647)."""
+
 from __future__ import annotations
 
 from flet_visual_builder.catalogue import (

@@ -8,6 +8,7 @@ import flet as ft
 
 from flet_visual_builder.app_context import Workspace
 from flet_visual_builder.services.starter import starter_project
+from flet_visual_builder.ui import dialogs
 
 
 class FileActions:
@@ -83,24 +84,58 @@ class FileActions:
         path.write_text(artifact.source, encoding="utf-8")
         self.ws.toast(f"Exported {path.name}", "success")
 
+    # ── dialogs ───────────────────────────────────────────────────────
     def new_document(self) -> None:
-        if self.ws.session.dirty:
-            self._confirm_discard()
-            return
-        self.ws.new_document(starter_project())
+        """Open the template gallery; the current document is only replaced on choice."""
+        self._show(dialogs.new_document_dialog(self._apply_new, self._close_dialog))
 
-    def _confirm_discard(self) -> None:
-        def discard(event: ft.ControlEvent) -> None:
+    def templates(self) -> None:
+        self._show(dialogs.template_gallery_dialog(self._apply_new, self._close_dialog))
+
+    def about(self) -> None:
+        self._show(dialogs.about_dialog(self._close_dialog))
+
+    def shortcuts(self) -> None:
+        self._show(dialogs.shortcuts_dialog(self._close_dialog))
+
+    def _show(self, dialog: ft.AlertDialog) -> None:
+        try:
+            self.ws.page.show_dialog(dialog)
+        except Exception as exc:  # a dialog must never take the workspace down
+            self.ws.toast(f"Could not open dialog: {exc}", "error")
+
+    def _close_dialog(self) -> None:
+        try:
             self.ws.page.pop_dialog()
-            self.ws.new_document(starter_project())
+        except Exception:
+            pass
 
-        self.ws.page.show_dialog(
+    def _apply_new(self, project) -> None:
+        self._close_dialog()
+
+        def replace_document() -> None:
+            self.ws.new_document(project)
+            self.ws.toast(f"Started from {project.name}", "success")
+
+        if not self.ws.session.dirty:
+            replace_document()
+            return
+
+        def discard(event: ft.ControlEvent) -> None:
+            self._close_dialog()
+            replace_document()
+
+        self._show(
             ft.AlertDialog(
                 modal=True,
                 title=ft.Text("Discard unsaved changes?"),
-                content=ft.Text("The current document has changes that are not on disk."),
+                content=ft.Text(
+                    "The current document has changes that are not on disk."
+                ),
                 actions=[
-                    ft.TextButton("Keep editing", on_click=lambda e: self.ws.page.pop_dialog()),
+                    ft.TextButton(
+                        "Keep editing", on_click=lambda e: self._close_dialog()
+                    ),
                     ft.TextButton("Discard", on_click=discard),
                 ],
                 actions_alignment=ft.MainAxisAlignment.END,

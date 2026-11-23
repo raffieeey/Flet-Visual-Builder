@@ -1,4 +1,5 @@
 """Committed Colors/Icons allowlist was generated from Flet 1.0.1."""
+
 from __future__ import annotations
 
 import json

@@ -47,7 +47,9 @@ def _boot_project(path: str | Path | None, session: ProjectSession):
         if result.ok and result.project is not None:
             session.set_path(path, saved=True)
             return result.project, False, notice
-        detail = result.diagnostics[0].message if result.diagnostics else "unknown error"
+        detail = (
+            result.diagnostics[0].message if result.diagnostics else "unknown error"
+        )
         notice = f"Could not open {path}: {detail}"
     recovered = session.read_autosave(repository)
     if recovered is not None:
@@ -55,7 +57,12 @@ def _boot_project(path: str | Path | None, session: ProjectSession):
     return starter_project(), False, notice
 
 
-def build(page: ft.Page, *, path: str | Path | None = None) -> Workspace:
+def build(
+    page: ft.Page,
+    *,
+    path: str | Path | None = None,
+    mode: str = "design",
+) -> Workspace:
     page.title = "Flet Visual Builder"
     page.padding = 0
     page.spacing = 0
@@ -87,6 +94,12 @@ def build(page: ft.Page, *, path: str | Path | None = None) -> Workspace:
         "diagnostics": DiagnosticsView(ws),
         "status": StatusBar(ws),
     }
+    tabs = {
+        "design": EditorTab.DESIGN,
+        "preview": EditorTab.PREVIEW,
+        "code": EditorTab.CODE,
+    }
+    ws.editor.activate(tabs.get(mode, EditorTab.DESIGN))
     ws.add_panel(_ShellSync(ws, shell))
     for name, panel in panels.items():
         ws.add_panel(panel)
@@ -118,6 +131,8 @@ def _install_shortcuts(page: ft.Page, ws: Workspace, actions: FileActions) -> No
                     ws.duplicate(ws.editor.selection)
             return
         if key in ("DELETE", "BACKSPACE"):
+            if ws.editor.text_focus:
+                return
             if ws.editor.selection and ws.editor.selection not in ws.project.root_ids:
                 ws.delete(ws.editor.selection)
         elif key == "ESCAPE":
@@ -126,7 +141,12 @@ def _install_shortcuts(page: ft.Page, ws: Workspace, actions: FileActions) -> No
     page.on_keyboard_event = on_key
 
 
-def main(page: ft.Page, *, path: str | Path | None = None) -> Workspace:
-    ws = build(page, path=path)
+def main(
+    page: ft.Page,
+    *,
+    path: str | Path | None = None,
+    mode: str = "design",
+) -> Workspace:
+    ws = build(page, path=path, mode=mode)
     page.on_close = lambda e: ws.close()
     return ws

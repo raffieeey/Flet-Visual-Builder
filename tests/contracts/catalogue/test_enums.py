@@ -1,4 +1,5 @@
 """Current enum forms only; legacy scroll none; Colors/Icons traps."""
+
 from __future__ import annotations
 
 from flet_visual_builder.catalogue import catalogue

@@ -3,6 +3,7 @@
 This module defines data and interfaces, not the builder implementation.
 Flet is deliberately imported only for type checking.
 """
+
 from __future__ import annotations
 
 import keyword
@@ -147,6 +148,25 @@ class ReplaceProject(Command):
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class RenameProject(Command):
+    """Rename the document without discarding undo history."""
+
+    name: str
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PasteNodes(Command):
+    """Insert a complete subtree atomically (used by duplicate and paste).
+
+    ``nodes`` carries the new nodes; exactly one must be a root that is not
+    referenced by another payload node. ``destination`` places that root.
+    """
+
+    nodes: tuple[Node, ...]
+    destination: DropIntent
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Undo(Command):
     pass
 
@@ -157,8 +177,18 @@ class Redo(Command):
 
 
 CommandADT: TypeAlias = (
-    InsertNode | DeleteNode | MoveNode | WrapNode | SetProperty
-    | UnsetProperty | SetEvent | ReplaceProject | Undo | Redo
+    InsertNode
+    | DeleteNode
+    | MoveNode
+    | WrapNode
+    | SetProperty
+    | UnsetProperty
+    | SetEvent
+    | ReplaceProject
+    | RenameProject
+    | PasteNodes
+    | Undo
+    | Redo
 )
 
 
@@ -325,7 +355,9 @@ class RenderResult:
 
 class PreviewRenderer(Protocol):
     def render_plan(self, plan: ControlPlan) -> RenderResult: ...
-    def render_leaf_sample(self, plan: ControlPlan, node_id: NodeId) -> RenderResult: ...
+    def render_leaf_sample(
+        self, plan: ControlPlan, node_id: NodeId
+    ) -> RenderResult: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -430,8 +462,11 @@ class DesignActions(Protocol):
         self, target: TargetDescriptor, point: Point | None, size: Size | None
     ) -> DropFeedback: ...
     def commit_drop(
-        self, target: TargetDescriptor, source_object_id: int,
-        point: Point | None, size: Size | None,
+        self,
+        target: TargetDescriptor,
+        source_object_id: int,
+        point: Point | None,
+        size: Size | None,
     ) -> CommandResult: ...
     def leave_target(self, target: TargetKey) -> None: ...
     def client_drag_complete(self, source_object_id: int) -> None: ...
@@ -479,11 +514,18 @@ class ShellMountPoints:
     preview: ft.Container
     code: ft.Container
     diagnostics: ft.Container
-    status: ft.Text
+    status: ft.Container
 
 
 RegionName: TypeAlias = Literal[
-    "toolbar", "palette", "tree", "inspector", "design", "preview", "code", "diagnostics"
+    "toolbar",
+    "palette",
+    "tree",
+    "inspector",
+    "design",
+    "preview",
+    "code",
+    "diagnostics",
 ]
 
 

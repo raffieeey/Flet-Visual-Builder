@@ -1,4 +1,5 @@
 """Compound codecs: padding/margin, border all-xor-sides, input-border kinds."""
+
 from __future__ import annotations
 
 from flet_visual_builder.catalogue import catalogue
@@ -69,9 +70,7 @@ def test_input_border_three_kinds_and_field_rules() -> None:
     assert none_extra
     assert any(d.code == CODE_INPUT_BORDER for d in none_extra)
     # underline does not accept gap_padding
-    underline_extra = _errors(
-        codec.validate({"kind": "underline", "gap_padding": 1})
-    )
+    underline_extra = _errors(codec.validate({"kind": "underline", "gap_padding": 1}))
     assert underline_extra
     # deprecated enum-style values are not accepted
     assert _errors(codec.validate("OUTLINE"))

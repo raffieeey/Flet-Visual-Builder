@@ -1,10 +1,11 @@
 """PageSpec for catalogue version 1 (TDD v2 §2.4.5)."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from flet_visual_builder.contracts import PropertySpec
+from flet_visual_builder.contracts import PropertySpec, Unset
 
 
 def _p(
@@ -38,6 +39,15 @@ PAGE_PROPERTIES: dict[str, PropertySpec] = {
             nullable=True,
         ),
         _p("appbar", "appbar", None, nullable=True),
+        _p("bgcolor", "color", Unset.VALUE, nullable=True),
+        _p("adaptive", "boolean", Unset.VALUE, nullable=True),
+        _p("rtl", "boolean", Unset.VALUE, nullable=False),
+        _p(
+            "horizontal_alignment",
+            "enum.CrossAxisAlignment",
+            Unset.VALUE,
+            nullable=False,
+        ),
     )
 }
 

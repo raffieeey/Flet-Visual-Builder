@@ -117,7 +117,7 @@ def test_all_nine_mount_point_fields_have_expected_types() -> None:
     for name in REGION_NAMES:
         host = getattr(shell.mounts, name)
         assert isinstance(host, ft.Container), name
-    assert isinstance(shell.mounts.status, ft.Text)
+    assert isinstance(shell.mounts.status, ft.Container)
     assert isinstance(shell.mounts, ShellMountPoints)
     assert isinstance(shell.root, ft.Control)
 
@@ -179,20 +179,14 @@ def test_activate_all_tabs_is_consistent_and_idempotent() -> None:
         _assert_root_contains_all_eight(shell)
 
 
-def test_set_status_writes_through_including_empty_string() -> None:
+def test_status_region_accepts_a_mounted_panel() -> None:
     shell = ShellImpl()
     status = shell.mounts.status
-    assert isinstance(status, ft.Text)
-
-    shell.set_status("Ready")
-    assert status.value == "Ready"
+    assert isinstance(status, ft.Container)
+    panel = ft.Row(controls=[ft.Text("Ready")])
+    shell.mount("status", panel)
     assert shell.mounts.status is status
-    assert shell.mounts.status.value == "Ready"
-
-    shell.set_status("")
-    assert status.value == ""
-    assert shell.mounts.status is status
-    assert shell.mounts.status.value == ""
+    assert shell.mounts.status.content is panel
 
 
 def test_shell_module_namespace_has_no_feature_logic() -> None:

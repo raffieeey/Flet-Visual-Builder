@@ -35,7 +35,9 @@ from tests.unit.model.helpers import (
     nested_containers,
 )
 
-MODEL_DIR = Path(__file__).resolve().parents[3] / "src" / "flet_visual_builder" / "model"
+MODEL_DIR = (
+    Path(__file__).resolve().parents[3] / "src" / "flet_visual_builder" / "model"
+)
 
 
 def _shapes() -> list[tuple[str, object]]:
@@ -65,7 +67,9 @@ def _commands_for(snapshot) -> list[CommandADT]:
     # Per-node ops.
     for node_id, node in project.nodes.items():
         commands.append(
-            SetProperty(command_id=f"sp-{node_id}", node_id=node_id, name="visible", value=False)
+            SetProperty(
+                command_id=f"sp-{node_id}", node_id=node_id, name="visible", value=False
+            )
         )
         commands.append(
             SetProperty(command_id=f"sz-{node_id}", node_id=node_id, name="n", value=0)
@@ -127,8 +131,12 @@ def _commands_for(snapshot) -> list[CommandADT]:
     return commands
 
 
-@pytest.mark.parametrize("shape_id,snapshot", _shapes(), ids=lambda v: v if isinstance(v, str) else None)
-def test_generated_commands_preserve_invariants(shape_id: str, snapshot: object) -> None:
+@pytest.mark.parametrize(
+    "shape_id,snapshot", _shapes(), ids=lambda v: v if isinstance(v, str) else None
+)
+def test_generated_commands_preserve_invariants(
+    shape_id: str, snapshot: object
+) -> None:
     frozen = copy.deepcopy(snapshot)
     assert validate_project(snapshot.project) == ()  # type: ignore[attr-defined]
     for command in _commands_for(snapshot):  # type: ignore[arg-type]

@@ -4,6 +4,7 @@ Colors and Icons are loaded from allowlist_manifest.json, which is generated
 from the pinned Flet 1.0.1 package by tools/gen_manifest.py. Runtime catalogue
 code must not import Flet.
 """
+
 from __future__ import annotations
 
 import json

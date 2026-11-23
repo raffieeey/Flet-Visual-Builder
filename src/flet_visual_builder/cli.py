@@ -18,9 +18,23 @@ def build_parser() -> argparse.ArgumentParser:
         description="Visual drag-and-drop builder for Flet apps.",
     )
     parser.add_argument("project", nargs="?", help="path to a .fvb.json project")
-    parser.add_argument("--web", action="store_true", help="run in a browser instead of a desktop window")
-    parser.add_argument("--port", type=int, default=0, help="port for --web (0 picks a free port)")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="run in a browser instead of a desktop window",
+    )
+    parser.add_argument(
+        "--port", type=int, default=0, help="port for --web (0 picks a free port)"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("design", "preview", "code"),
+        default="design",
+        help="editor mode to open in (default: design)",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     return parser
 
 
@@ -29,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     project = Path(args.project).expanduser() if args.project else None
     view = ft.AppView.WEB_BROWSER if args.web else ft.AppView.FLET_APP
     ft.run(
-        lambda page: app_main(page, path=project),
+        lambda page: app_main(page, path=project, mode=args.mode),
         view=view,
         port=args.port,
     )

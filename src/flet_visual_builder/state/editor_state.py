@@ -13,6 +13,7 @@ class EditorState:
         "hover",
         "active_tab",
         "status",
+        "text_focus",
         "last_successful_projection_revision",
         "visible_stale_revision",
     )
@@ -29,6 +30,7 @@ class EditorState:
         self.hover = hover
         self.active_tab = active_tab
         self.status = status
+        self.text_focus = False
         self.last_successful_projection_revision: int | None = None
         self.visible_stale_revision: int | None = None
 

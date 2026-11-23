@@ -34,9 +34,7 @@ class FakeClock:
 
 
 def run(dispatcher: HistoryDispatcher, command: CommandADT):
-    return dispatcher.execute(
-        command, expected_revision=dispatcher.snapshot.revision
-    )
+    return dispatcher.execute(command, expected_revision=dispatcher.snapshot.revision)
 
 
 def insert_text(
@@ -53,9 +51,7 @@ def insert_text(
         InsertNode(
             command_id=command_id or f"ins-{node_id}",
             node=make_node(node_id, "Text", props={"value": node_id}),
-            destination=DropIntent(
-                parent_id="root", slot_name="controls", index=at
-            ),
+            destination=DropIntent(parent_id="root", slot_name="controls", index=at),
         ),
     )
 

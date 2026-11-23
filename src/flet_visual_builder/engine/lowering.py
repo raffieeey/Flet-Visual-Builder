@@ -3,6 +3,7 @@
 No Flet import. Constructor and enum symbols are allowlisted from the frozen
 catalogue; project strings never become getattr/eval targets.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -131,9 +132,7 @@ def document_sha256(project: Project) -> str:
             "id": node.id,
             "type_id": node.type_id,
             "props": _to_jsonable(dict(node.props)),
-            "slots": {
-                slot: list(ids) for slot, ids in node.slots.items()
-            },
+            "slots": {slot: list(ids) for slot, ids in node.slots.items()},
             "events": {event: symbol.name for event, symbol in node.events.items()},
         }
     assets = {
@@ -241,7 +240,9 @@ def _lower_value(catalogue: Catalogue, spec: Any, value: Any) -> ValueExpr:
     return catalogue.codecs[spec.codec_id].lower(value)
 
 
-def _validate_page(catalogue: Catalogue, page: Mapping[str, Any]) -> tuple[Diagnostic, ...]:
+def _validate_page(
+    catalogue: Catalogue, page: Mapping[str, Any]
+) -> tuple[Diagnostic, ...]:
     validate_page = getattr(catalogue, "validate_page", None)
     if callable(validate_page):
         return tuple(validate_page(page))  # type: ignore[arg-type]

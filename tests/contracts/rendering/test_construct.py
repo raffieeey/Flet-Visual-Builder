@@ -1,4 +1,5 @@
 """All sixteen catalogue widgets lower and construct as real Flet controls."""
+
 from __future__ import annotations
 
 import flet as ft
@@ -34,4 +35,7 @@ def test_each_catalogue_widget_constructs(type_id: str) -> None:
 
 
 def test_sixteen_entries_are_complete() -> None:
-    assert len(WIDGET_ORDER) == 16
+    from tests.contracts.catalogue.expected import WIDGET_ORDER as ORIGINAL_ORDER
+
+    assert WIDGET_ORDER[: len(ORIGINAL_ORDER)] == ORIGINAL_ORDER
+    assert len(WIDGET_ORDER) >= 36

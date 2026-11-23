@@ -1,4 +1,5 @@
 """Builders for codegen tests. Plans are constructed from catalogue codecs."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -121,12 +122,10 @@ def reverse_plan_mappings(plan: ControlPlan) -> ControlPlan:
                 for name, expr in reversed(list(node.properties.items()))
             },
             slots={
-                name: children
-                for name, children in reversed(list(node.slots.items()))
+                name: children for name, children in reversed(list(node.slots.items()))
             },
             events={
-                name: symbol
-                for name, symbol in reversed(list(node.events.items()))
+                name: symbol for name, symbol in reversed(list(node.events.items()))
             },
         )
     assets = {key: plan.assets[key] for key in reversed(list(plan.assets))}

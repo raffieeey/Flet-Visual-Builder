@@ -109,10 +109,7 @@ def test_wrong_event_symbol_on_document() -> None:
         events={"on_click": EventSymbol("handle_other_click")},
     )
     root = make_node("root", "Column", slots={"controls": ("save",)})
-    codes = {
-        d.code
-        for d in validate_project(make_snapshot(root, node).project)
-    }
+    codes = {d.code for d in validate_project(make_snapshot(root, node).project)}
     assert "event.symbol" in codes
 
 

@@ -11,7 +11,13 @@ from flet_visual_builder.ui.theme import T, faint, separator_dot, status_dot
 
 class StatusBar(BasePanel):
     interests = frozenset(
-        {Refresh.STATUS, Refresh.CHROME, Refresh.DOCUMENT, Refresh.PROJECT, Refresh.SELECTION}
+        {
+            Refresh.STATUS,
+            Refresh.CHROME,
+            Refresh.DOCUMENT,
+            Refresh.PROJECT,
+            Refresh.SELECTION,
+        }
     )
 
     def build(self) -> ft.Control:
@@ -20,7 +26,12 @@ class StatusBar(BasePanel):
         diagnostics = ws.diagnostics()
         errors = sum(1 for d in diagnostics if d.severity.value == "error")
         warnings = sum(1 for d in diagnostics if d.severity.value == "warning")
-        state = "Draft" if ws.session.dirty else "Saved"
+        if ws.session.dirty:
+            state = "Draft"
+        elif ws.session.path is None:
+            state = "New"
+        else:
+            state = "Saved"
 
         right: list[ft.Control] = []
         if warnings:

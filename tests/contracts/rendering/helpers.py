@@ -1,4 +1,5 @@
 """Builders for rendering contract tests."""
+
 from __future__ import annotations
 
 import hashlib
@@ -77,9 +78,7 @@ def widget_node(
     merged = catalogue.new_props(type_id)
     if props:
         merged.update(props)
-    return make_node(
-        node_id, type_id, props=merged, slots=slots, events=events
-    )
+    return make_node(node_id, type_id, props=merged, slots=slots, events=events)
 
 
 def widget_snapshot(
@@ -92,15 +91,13 @@ def widget_snapshot(
     assets: Mapping[str, Asset] | None = None,
     revision: int = 1,
 ) -> DocumentSnapshot:
-    node = widget_node(
-        type_id, props=props, slots=slots, events=events
-    )
-    return make_snapshot(
-        node, page=page, assets=assets, revision=revision
-    )
+    node = widget_node(type_id, props=props, slots=slots, events=events)
+    return make_snapshot(node, page=page, assets=assets, revision=revision)
 
 
-def make_asset(asset_id: str, data: bytes = TINY_PNG, media_type: str = "image/png") -> Asset:
+def make_asset(
+    asset_id: str, data: bytes = TINY_PNG, media_type: str = "image/png"
+) -> Asset:
     return Asset(
         id=asset_id,
         media_type=media_type,

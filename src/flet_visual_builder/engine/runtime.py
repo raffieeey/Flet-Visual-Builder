@@ -4,6 +4,7 @@ Constructor/enum resolution uses the frozen catalogue allowlist only.
 Project strings never reach eval, exec, dynamic import, or getattr.
 Design chrome (frames, drag handles, drop targets) is not constructed here.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -18,7 +19,7 @@ from flet_visual_builder.catalogue.enum_manifest import (
     ENUM_FAMILIES,
     ICONS,
 )
-from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER, WIDGET_SPECS
 from flet_visual_builder.contracts import (
     AssetValue,
     CallValue,
@@ -110,9 +111,7 @@ def _build_ft_symbol_table() -> dict[tuple[str, ...], object]:
         raise RuntimeError(f"missing Flet mappings for {sorted(extra)}")
     missing = ALLOWED_SYMBOL_PATHS - set(table)
     if missing:
-        raise RuntimeError(
-            f"allowlist/Flet table mismatch ({len(missing)} paths)"
-        )
+        raise RuntimeError(f"allowlist/Flet table mismatch ({len(missing)} paths)")
     return table
 
 
@@ -207,9 +206,7 @@ class RuntimeRenderer:
                     ),
                 ),
             )
-        occupied = [
-            slot for slot, ids in node.slots.items() if len(ids) > 0
-        ]
+        occupied = [slot for slot, ids in node.slots.items() if len(ids) > 0]
         if occupied:
             return RenderResult(
                 revision=plan.revision,
@@ -318,7 +315,10 @@ class RuntimeRenderer:
             )
         for slot, children in children_by_slot.items():
             if not children:
-                if slot == "controls" and slot not in kwargs:
+                if (
+                    WIDGET_SPECS[node.type_id].slots[slot].maximum is None
+                    and slot not in kwargs
+                ):
                     kwargs[slot] = []
                 continue
             if slot in kwargs:
@@ -330,10 +330,10 @@ class RuntimeRenderer:
                         node_id=node.node_id,
                     )
                 )
-            if slot == "controls":
+            if WIDGET_SPECS[node.type_id].slots[slot].maximum is None:
                 kwargs[slot] = list(children)
             else:
-                kwargs[slot] = children[0] if len(children) == 1 else list(children)
+                kwargs[slot] = children[0]
         allowed = _constructor_params(ctor)
         if allowed is not None:
             unknown = [key for key in kwargs if key not in allowed]
@@ -404,15 +404,11 @@ class RuntimeRenderer:
                     )
                 )
             args = [
-                self._eval_expr(
-                    arg, plan, node_id=node_id, path=path + (index,)
-                )
+                self._eval_expr(arg, plan, node_id=node_id, path=path + (index,))
                 for index, arg in enumerate(expr.args)
             ]
             kwargs = {
-                key: self._eval_expr(
-                    value, plan, node_id=node_id, path=path + (key,)
-                )
+                key: self._eval_expr(value, plan, node_id=node_id, path=path + (key,))
                 for key, value in expr.kwargs.items()
             }
             try:
@@ -465,9 +461,7 @@ class RuntimeRenderer:
             )
         )
 
-    def _project_page(
-        self, plan: ControlPlan, roots: list[ft.Control]
-    ) -> ft.Pagelet:
+    def _project_page(self, plan: ControlPlan, roots: list[ft.Control]) -> ft.Pagelet:
         """Supported PageSpec adapter: themed Container inside a Pagelet."""
         page_values: dict[str, Any] = {}
         for name, expr in plan.page_properties.items():
@@ -475,7 +469,16 @@ class RuntimeRenderer:
                 expr, plan, node_id=None, path=("page", name)
             )
         scroll = page_values.get("scroll")
-        column = ft.Column(controls=list(roots), scroll=scroll)
+        # Page roots fill the width by default, matching a real Flet page where
+        # controls are laid out in a stretching column.
+        column_kwargs = {
+            "controls": list(roots),
+            "scroll": scroll,
+            "horizontal_alignment": page_values.get(
+                "horizontal_alignment", ft.CrossAxisAlignment.STRETCH
+            ),
+        }
+        column = ft.Column(**column_kwargs)
         host_kwargs: dict[str, Any] = {"content": column}
         if "padding" in page_values:
             host_kwargs["padding"] = page_values["padding"]
@@ -487,6 +490,9 @@ class RuntimeRenderer:
         pagelet_kwargs: dict[str, Any] = {"content": host}
         if "appbar" in page_values:
             pagelet_kwargs["appbar"] = page_values["appbar"]
+        for name in ("bgcolor", "adaptive", "rtl"):
+            if name in page_values:
+                pagelet_kwargs[name] = page_values[name]
         title = page_values.get("title")
         if title is not None:
             pagelet_kwargs["data"] = {"page_title": title}

@@ -90,10 +90,14 @@ class ProjectSession:
     def autosave_path(self) -> Path:
         return self.base / AUTOSAVE_NAME
 
-    def should_autosave(self, project: Project, revision: int, *, min_interval: int = 40) -> bool:
+    def should_autosave(
+        self, project: Project, revision: int, *, min_interval: int = 40
+    ) -> bool:
         return revision != self._autosaved_revision
 
-    def write_autosave(self, repository: JsonRepository, project: Project, revision: int) -> bool:
+    def write_autosave(
+        self, repository: JsonRepository, project: Project, revision: int
+    ) -> bool:
         """Persist a recovery copy. Returns False when the document is not serialisable."""
         result = repository.save(project, self.autosave_path)
         if not result.ok:
@@ -106,7 +110,9 @@ class ProjectSession:
                     "path": str(self.path) if self.path else None,
                     "name": project.name,
                     "revision": revision,
-                    "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "saved_at": datetime.now(timezone.utc).isoformat(
+                        timespec="seconds"
+                    ),
                 },
                 indent=2,
             ),

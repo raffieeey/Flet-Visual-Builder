@@ -8,6 +8,7 @@ Ordering is defined here, never by incidental dict iteration:
 * children follow ``root_ids`` and each slot's child-id tuple
 * event stubs follow a preorder tree walk with event names sorted per node
 """
+
 from __future__ import annotations
 
 import ast
@@ -525,9 +526,7 @@ def _validate_expr(
             )
         for index, arg in enumerate(expr.args):
             diags.extend(
-                _validate_expr(
-                    arg, plan, path=path + (index,), node_id=node_id
-                )
+                _validate_expr(arg, plan, path=path + (index,), node_id=node_id)
             )
         for name, value in _ordered_kwargs(expr.constructor.path, expr.kwargs):
             if not _is_identifier(name):
@@ -541,18 +540,14 @@ def _validate_expr(
                 )
                 continue
             diags.extend(
-                _validate_expr(
-                    value, plan, path=path + (name,), node_id=node_id
-                )
+                _validate_expr(value, plan, path=path + (name,), node_id=node_id)
             )
         return diags
     if isinstance(expr, SequenceValue):
         diags = []
         for index, item in enumerate(expr.items):
             diags.extend(
-                _validate_expr(
-                    item, plan, path=path + (index,), node_id=node_id
-                )
+                _validate_expr(item, plan, path=path + (index,), node_id=node_id)
             )
         return diags
     if isinstance(expr, MappingValue):
@@ -560,14 +555,10 @@ def _validate_expr(
         ordered = sorted(expr.items, key=lambda pair: _mapping_sort_key(pair[0]))
         for index, (key, value) in enumerate(ordered):
             diags.extend(
-                _validate_expr(
-                    key, plan, path=path + (index, 0), node_id=node_id
-                )
+                _validate_expr(key, plan, path=path + (index, 0), node_id=node_id)
             )
             diags.extend(
-                _validate_expr(
-                    value, plan, path=path + (index, 1), node_id=node_id
-                )
+                _validate_expr(value, plan, path=path + (index, 1), node_id=node_id)
             )
         return diags
     if isinstance(expr, AssetValue):
@@ -614,7 +605,7 @@ def _emit(plan: ControlPlan) -> str:
     lines.append("")
     lines.extend(_emit_main(plan, events))
     lines.append("")
-    lines.append("if __name__ == \"__main__\":")
+    lines.append('if __name__ == "__main__":')
     lines.append("    ft.run(main)")
     lines.append("")
     return "\n".join(lines)
@@ -699,7 +690,13 @@ def _emit_main(
     assigned = False
     for name in _ordered_keys(plan.page_properties, tuple(PAGE_PROPERTIES)):
         expr = plan.page_properties[name]
-        if isinstance(expr, LiteralValue) and expr.value is None:
+        # Preserve legacy null omission while allowing explicit reset of new
+        # nullable page properties (notably background and adaptive mode).
+        if (
+            isinstance(expr, LiteralValue)
+            and expr.value is None
+            and name not in {"bgcolor", "adaptive"}
+        ):
             continue
         lines.append(f"    page.{name} = {_render_expr(expr)}")
         assigned = True

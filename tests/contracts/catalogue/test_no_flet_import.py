@@ -1,4 +1,5 @@
 """Catalogue modules must not import Flet at runtime."""
+
 from __future__ import annotations
 
 import subprocess

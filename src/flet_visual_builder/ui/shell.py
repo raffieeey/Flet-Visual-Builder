@@ -7,6 +7,8 @@ persistence features.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import flet as ft
 
 from flet_visual_builder.contracts import (
@@ -38,7 +40,7 @@ class ShellImpl:
         preview = ft.Container(data="preview", expand=True)
         code = ft.Container(data="code", expand=True)
         diagnostics = ft.Container(data="diagnostics")
-        status = ft.Text(value="", size=11, color=T.text_muted)
+        status = ft.Container(data="status", expand=True)
 
         self.mounts = ShellMountPoints(
             toolbar=toolbar,
@@ -78,7 +80,9 @@ class ShellImpl:
                         ft.Container(width=1, bgcolor=T.border, height=None),
                         centre,
                         ft.Container(width=1, bgcolor=T.border, height=None),
-                        ft.Container(content=inspector, width=INSPECTOR_W, bgcolor=T.panel),
+                        ft.Container(
+                            content=inspector, width=INSPECTOR_W, bgcolor=T.panel
+                        ),
                     ],
                     expand=True,
                     spacing=0,
@@ -99,12 +103,12 @@ class ShellImpl:
         )
         self.activate(EditorTab.DESIGN)
 
-    def mount(self, region: RegionName, content: ft.Control | None) -> None:
-        getattr(self.mounts, region).content = content
+    def mount(self, region: str, content: ft.Control | None) -> None:
+        host = getattr(self.mounts, region, None)
+        if host is None:
+            raise ValueError(f"unknown shell region {region!r}")
+        host.content = content
 
     def activate(self, tab: EditorTab) -> None:
         for editor_tab, region in _EDITOR_TABS:
             getattr(self.mounts, region).visible = editor_tab == tab
-
-    def set_status(self, text: str) -> None:
-        self.mounts.status.value = text

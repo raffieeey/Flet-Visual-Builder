@@ -1,4 +1,5 @@
 """ValueCodec implementations. No Flet imports — only symbolic ValueExpr output."""
+
 from __future__ import annotations
 
 import math
@@ -29,6 +30,7 @@ from flet_visual_builder.contracts import (
     LiteralValue,
     MappingValue,
     Severity,
+    SequenceValue,
     SymbolRef,
     ValueCodec,
     ValueExpr,
@@ -44,9 +46,7 @@ CODE_BORDER_SHAPE = "CATALOGUE_BORDER_SHAPE"
 CODE_INPUT_BORDER = "CATALOGUE_INPUT_BORDER"
 
 
-def _error(
-    code: str, message: str, path: tuple[str | int, ...] = ()
-) -> Diagnostic:
+def _error(code: str, message: str, path: tuple[str | int, ...] = ()) -> Diagnostic:
     return Diagnostic(code=code, message=message, severity=Severity.ERROR, path=path)
 
 
@@ -194,7 +194,9 @@ _HEX_LITERAL = re.compile(
 @dataclass(frozen=True, slots=True)
 class ColorCodec:
     def validate(self, value: JsonValue) -> tuple[Diagnostic, ...]:
-        if isinstance(value, str) and (value in COLORS or _HEX_LITERAL.fullmatch(value)):
+        if isinstance(value, str) and (
+            value in COLORS or _HEX_LITERAL.fullmatch(value)
+        ):
             return ()
         return (
             _error(
@@ -235,7 +237,11 @@ _INSETS_KEYS = ("left", "top", "right", "bottom")
 _RADIUS_KEYS = ("top_left", "top_right", "bottom_left", "bottom_right")
 _SIDE_KEYS = ("left", "top", "right", "bottom")
 _BORDER_SIDE_KEYS = frozenset({"width", "color"})
-def _validate_nonneg_number(value: JsonValue, path: tuple[str | int, ...]) -> tuple[Diagnostic, ...]:
+
+
+def _validate_nonneg_number(
+    value: JsonValue, path: tuple[str | int, ...]
+) -> tuple[Diagnostic, ...]:
     if not _is_finite_number(value):
         return (_error(CODE_INVALID_TYPE, "expected finite nonnegative number", path),)
     if float(value) < 0:  # type: ignore[arg-type]
@@ -248,9 +254,7 @@ def _lower_nonneg(value: JsonValue) -> LiteralValue:
     return LiteralValue(value)  # type: ignore[arg-type]
 
 
-def _validate_insets(
-    value: JsonValue, *, constructor: str
-) -> tuple[Diagnostic, ...]:
+def _validate_insets(value: JsonValue, *, constructor: str) -> tuple[Diagnostic, ...]:
     if _is_finite_number(value):
         if float(value) < 0:  # type: ignore[arg-type]
             return (_error(CODE_INVALID_VALUE, "expected nonnegative number"),)
@@ -328,9 +332,7 @@ class RadiusCodec:
         mapping = value  # type: ignore[assignment]
         extras = [k for k in mapping if k not in _RADIUS_KEYS]
         if extras:
-            return (
-                _error(CODE_INVALID_VALUE, f"unknown radius field {extras[0]!r}"),
-            )
+            return (_error(CODE_INVALID_VALUE, f"unknown radius field {extras[0]!r}"),)
         if not mapping:
             return (_error(CODE_INVALID_VALUE, "empty radius record"),)
         diags: list[Diagnostic] = []
@@ -476,7 +478,7 @@ def _validate_input_border_record(
             _error(
                 CODE_INPUT_BORDER,
                 "deprecated input-border enum strings are not accepted; "
-                "use {\"kind\": \"outline\"|\"underline\"|\"none\"}",
+                'use {"kind": "outline"|"underline"|"none"}',
                 path,
             ),
         )
@@ -549,7 +551,9 @@ class InputBorderCodec:
         if isinstance(value, str):
             return _validate_input_border_record(value)
         if not _is_mapping(value):
-            return (_error(CODE_INVALID_TYPE, "expected input-border record or state map"),)
+            return (
+                _error(CODE_INVALID_TYPE, "expected input-border record or state map"),
+            )
         mapping = value  # type: ignore[assignment]
         if "kind" in mapping:
             return _validate_input_border_record(mapping)
@@ -561,7 +565,7 @@ class InputBorderCodec:
         return (
             _error(
                 CODE_INPUT_BORDER,
-                "expected {\"kind\": ...} or a ControlState map of input-border records",
+                'expected {"kind": ...} or a ControlState map of input-border records',
             ),
         )
 
@@ -616,7 +620,9 @@ class ImageSourceCodec:
         if kind == "asset":
             asset_id = mapping.get("asset_id")
             if not isinstance(asset_id, str) or not asset_id:
-                return (_error(CODE_INVALID_VALUE, "asset image source requires asset_id"),)
+                return (
+                    _error(CODE_INVALID_VALUE, "asset image source requires asset_id"),
+                )
             extras = [k for k in mapping if k not in {"kind", "asset_id"}]
             if extras:
                 return (
@@ -629,7 +635,11 @@ class ImageSourceCodec:
         if kind == "url":
             url = mapping.get("url")
             if not isinstance(url, str) or not _https_url(url):
-                return (_error(CODE_INVALID_VALUE, "url image source requires an https URL"),)
+                return (
+                    _error(
+                        CODE_INVALID_VALUE, "url image source requires an https URL"
+                    ),
+                )
             extras = [k for k in mapping if k not in {"kind", "url"}]
             if extras:
                 return (
@@ -666,9 +676,7 @@ class ThemeCodec:
         mapping = value  # type: ignore[assignment]
         extras = [k for k in mapping if k != "color_scheme_seed"]
         if extras:
-            return (
-                _error(CODE_INVALID_VALUE, f"unknown theme field {extras[0]!r}"),
-            )
+            return (_error(CODE_INVALID_VALUE, f"unknown theme field {extras[0]!r}"),)
         if "color_scheme_seed" not in mapping:
             return (_error(CODE_INVALID_VALUE, "theme requires color_scheme_seed"),)
         return _COLOR.validate(mapping["color_scheme_seed"])
@@ -689,9 +697,7 @@ class AppBarCodec:
         mapping = value  # type: ignore[assignment]
         extras = [k for k in mapping if k != "title"]
         if extras:
-            return (
-                _error(CODE_INVALID_VALUE, f"unknown appbar field {extras[0]!r}"),
-            )
+            return (_error(CODE_INVALID_VALUE, f"unknown appbar field {extras[0]!r}"),)
         if "title" not in mapping or not isinstance(mapping["title"], str):
             return (_error(CODE_INVALID_VALUE, "appbar requires string title"),)
         return ()
@@ -730,3 +736,129 @@ CODECS: dict[str, ValueCodec] = {
     "theme": ThemeCodec(),
     "appbar": AppBarCodec(),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class RecordSequenceCodec:
+    constructor: str
+    fields: Mapping[str, str]
+    required: frozenset[str] = frozenset()
+    minimum: int = 0
+
+    def validate(self, value: JsonValue) -> tuple[Diagnostic, ...]:
+        if not isinstance(value, tuple):
+            return (_error(CODE_INVALID_TYPE, "expected a frozen sequence (tuple)"),)
+        if len(value) < self.minimum:
+            return (
+                _error(CODE_INVALID_VALUE, f"expected at least {self.minimum} items"),
+            )
+        errors = []
+        for index, item in enumerate(value):
+            if not _is_mapping(item):
+                errors.append(_error(CODE_INVALID_TYPE, "expected record", (index,)))
+                continue
+            for name in self.required - item.keys():
+                errors.append(
+                    _error(CODE_INVALID_VALUE, f"missing {name}", (index, name))
+                )
+            for name, val in item.items():
+                if name not in self.fields:
+                    errors.append(
+                        _error(
+                            CODE_INVALID_VALUE, f"unknown field {name}", (index, name)
+                        )
+                    )
+                    continue
+                for diagnostic in CODECS[self.fields[name]].validate(val):
+                    errors.append(
+                        _error(
+                            diagnostic.code,
+                            diagnostic.message,
+                            (index, name) + diagnostic.path,
+                        )
+                    )
+        return tuple(errors)
+
+    def lower(self, value: JsonValue) -> ValueExpr:
+        assert isinstance(value, tuple)
+        return SequenceValue(
+            tuple(
+                _call(
+                    (self.constructor,),
+                    kwargs={
+                        name: CODECS[self.fields[name]].lower(val)
+                        for name, val in item.items()
+                    },
+                )
+                for item in value
+            )
+        )
+
+
+CODECS.update(
+    {
+        "positive_integer": NumberCodec(minimum=1, integer=True),
+        "nonneg_integer": NumberCodec(minimum=0, integer=True),
+        "dropdown_options": RecordSequenceCodec(
+            "DropdownOption",
+            {
+                "key": "string",
+                "text": "string",
+                "leading_icon": "icon",
+                "trailing_icon": "icon",
+            },
+        ),
+        "navigation_destinations": RecordSequenceCodec(
+            "NavigationBarDestination",
+            {"icon": "icon", "label": "string", "selected_icon": "icon"},
+            frozenset({"icon"}),
+        ),
+        "segments": RecordSequenceCodec(
+            "Segment",
+            {"value": "string", "label": "string", "icon": "icon"},
+            frozenset({"value"}),
+            minimum=1,
+        ),
+        "tabs": RecordSequenceCodec("Tab", {"label": "string", "icon": "icon"}),
+    }
+)
+
+
+@dataclass(frozen=True, slots=True)
+class EmptyControlCodec:
+    """A removable placeholder for controls whose Flet constructor requires content."""
+
+    def validate(self, value: JsonValue) -> tuple[Diagnostic, ...]:
+        if value != {"kind": "empty"}:
+            return (_error(CODE_INVALID_VALUE, "expected empty control marker"),)
+        return ()
+
+    def lower(self, value: JsonValue) -> ValueExpr:
+        return _call(("Container",))
+
+
+CODECS["empty_control"] = EmptyControlCodec()
+
+
+@dataclass(frozen=True, slots=True)
+class TabsContentCodec:
+    """One complete starter tab, replaceable with an authored content slot."""
+
+    def validate(self, value: JsonValue) -> tuple[Diagnostic, ...]:
+        return EmptyControlCodec().validate(value)
+
+    def lower(self, value: JsonValue) -> ValueExpr:
+        tab = _call(("Tab",), kwargs={"label": LiteralValue("Tab")})
+        bar = _call(("TabBar",), kwargs={"tabs": SequenceValue((tab,))})
+        child = _call(("Text",), kwargs={"value": LiteralValue("Tab content")})
+        view = _call(
+            ("TabBarView",),
+            kwargs={"controls": SequenceValue((child,)), "height": LiteralValue(200)},
+        )
+        return _call(("Column",), kwargs={"controls": SequenceValue((bar, view))})
+
+
+CODECS["tabs_content"] = TabsContentCodec()
+CODECS["tab_views"] = RecordSequenceCodec(
+    "Text", {"value": "string"}, frozenset({"value"}), minimum=1
+)

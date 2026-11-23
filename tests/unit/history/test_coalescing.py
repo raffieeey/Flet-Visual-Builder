@@ -71,11 +71,21 @@ def test_different_gesture_does_not_coalesce() -> None:
     clock = FakeClock(0.0)
     dispatcher = HistoryDispatcher(column_with_texts(1), clock=clock)
     set_prop(
-        dispatcher, command_id="p1", node_id="t0", name="value", value="a", gesture_id="g1"
+        dispatcher,
+        command_id="p1",
+        node_id="t0",
+        name="value",
+        value="a",
+        gesture_id="g1",
     )
     clock.advance(0.1)
     set_prop(
-        dispatcher, command_id="p2", node_id="t0", name="value", value="b", gesture_id="g2"
+        dispatcher,
+        command_id="p2",
+        node_id="t0",
+        name="value",
+        value="b",
+        gesture_id="g2",
     )
     assert dispatcher.history_length == 2
 
@@ -87,11 +97,21 @@ def test_different_node_does_not_coalesce() -> None:
     dispatcher = HistoryDispatcher(column_with_texts(1), clock=clock)
     insert_text(dispatcher, "t1")
     set_prop(
-        dispatcher, command_id="p1", node_id="t0", name="value", value="a", gesture_id="g"
+        dispatcher,
+        command_id="p1",
+        node_id="t0",
+        name="value",
+        value="a",
+        gesture_id="g",
     )
     clock.advance(0.1)
     set_prop(
-        dispatcher, command_id="p2", node_id="t1", name="value", value="b", gesture_id="g"
+        dispatcher,
+        command_id="p2",
+        node_id="t1",
+        name="value",
+        value="b",
+        gesture_id="g",
     )
     assert dispatcher.history_length == 3  # insert + two property entries
 
@@ -100,11 +120,21 @@ def test_different_property_does_not_coalesce() -> None:
     clock = FakeClock(0.0)
     dispatcher = HistoryDispatcher(column_with_texts(1), clock=clock)
     set_prop(
-        dispatcher, command_id="p1", node_id="t0", name="value", value="a", gesture_id="g"
+        dispatcher,
+        command_id="p1",
+        node_id="t0",
+        name="value",
+        value="a",
+        gesture_id="g",
     )
     clock.advance(0.1)
     set_prop(
-        dispatcher, command_id="p2", node_id="t0", name="visible", value=False, gesture_id="g"
+        dispatcher,
+        command_id="p2",
+        node_id="t0",
+        name="visible",
+        value=False,
+        gesture_id="g",
     )
     assert dispatcher.history_length == 2
 
@@ -146,7 +176,12 @@ def test_unset_coalesces_with_set_on_same_triple() -> None:
     clock = FakeClock(0.0)
     dispatcher = HistoryDispatcher(column_with_texts(1), clock=clock)
     set_prop(
-        dispatcher, command_id="p1", node_id="t0", name="value", value="z", gesture_id="g"
+        dispatcher,
+        command_id="p1",
+        node_id="t0",
+        name="value",
+        value="z",
+        gesture_id="g",
     )
     clock.advance(0.2)
     result = run(

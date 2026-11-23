@@ -1,4 +1,5 @@
 """Black 25.1.0 wrapper: pinned Mode, stable output, line length 88."""
+
 from __future__ import annotations
 
 from pathlib import Path

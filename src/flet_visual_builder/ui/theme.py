@@ -241,7 +241,10 @@ def section(
     if trailing is not None:
         row.append(trailing)
     return ft.Column(
-        controls=[ft.Row(controls=row, vertical_alignment=ft.CrossAxisAlignment.CENTER), content],
+        controls=[
+            ft.Row(controls=row, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            content,
+        ],
         spacing=SM,
         tight=True,
     )
@@ -252,7 +255,9 @@ def empty_state(icon: str, title: str, body: str) -> ft.Control:
         content=ft.Column(
             controls=[
                 ft.Icon(icon, size=26, color=T.border_strong),
-                text(title, size=F_LABEL, weight=ft.FontWeight.W_600, color=T.text_muted),
+                text(
+                    title, size=F_LABEL, weight=ft.FontWeight.W_600, color=T.text_muted
+                ),
                 faint(body),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -265,7 +270,9 @@ def empty_state(icon: str, title: str, body: str) -> ft.Control:
     )
 
 
-def pill(value: str, *, color: str | None = None, bgcolor: str | None = None) -> ft.Container:
+def pill(
+    value: str, *, color: str | None = None, bgcolor: str | None = None
+) -> ft.Container:
     return ft.Container(
         content=ft.Text(
             value=value,
@@ -287,7 +294,9 @@ def separator_dot() -> ft.Container:
     return ft.Container(width=2, height=2, bgcolor=T.border_strong, border_radius=2)
 
 
-def scroll(control: ft.Control, *, expand: bool | int = True, spacing: int = 0) -> ft.Column:
+def scroll(
+    control: ft.Control, *, expand: bool | int = True, spacing: int = 0
+) -> ft.Column:
     """Vertical scroll host with predictable desktop behaviour."""
     return ft.Column(
         controls=[control],

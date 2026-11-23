@@ -1,4 +1,5 @@
 """Invalid snapshots/plans and the constructor allowlist guard."""
+
 from __future__ import annotations
 
 import ast
@@ -168,9 +169,9 @@ def test_engine_source_has_no_eval_exec_or_dynamic_import() -> None:
                 for alias in node.names:
                     assert alias.name != "importlib"
             if isinstance(node, ast.ImportFrom):
-                assert node.module != "importlib" and not (node.module or "").startswith(
-                    "importlib."
-                )
+                assert node.module != "importlib" and not (
+                    node.module or ""
+                ).startswith("importlib.")
 
 
 def test_resolve_symbol_never_getattr_on_path_segments() -> None:
@@ -178,7 +179,9 @@ def test_resolve_symbol_never_getattr_on_path_segments() -> None:
     source = (ENGINE / "runtime.py").read_text(encoding="utf-8")
     assert "getattr(ft, expr" not in source
     assert "getattr(ft, path" not in source
-    assert "getattr(ft, name)" not in source or "_trusted_getattr(ft, type_id)" in source
+    assert (
+        "getattr(ft, name)" not in source or "_trusted_getattr(ft, type_id)" in source
+    )
     # Lookup function uses the prebuilt table only.
     assert "return _FT_SYMBOLS.get(path)" in source
     assert resolve_symbol(("Colors", "__dict__")) is None

@@ -27,6 +27,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# flet-web 1.0.1 passes `openapi_prefix` to FastAPI, which newer Starlette removed.
+# Pin the last compatible FastAPI line for the browser target.
+web = [
+    "flet-web==1.0.1",
+    "fastapi==0.115.12",
+]
 dev = [
     "flet[test]==1.0.1",
     "black==25.1.0",
@@ -50,7 +56,7 @@ where = ["src"]
 include = ["flet_visual_builder*"]
 
 [tool.setuptools.package-data]
-flet_visual_builder = ["templates/*.json", "py.typed"]
+flet_visual_builder = ["py.typed", "templates/*.json", "catalogue/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

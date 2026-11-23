@@ -3,6 +3,7 @@
 Runtime Flet imports are forbidden in this package. Codecs emit ValueExpr
 symbols; engine/runtime.py is the only consumer that materializes Flet objects.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -38,7 +39,7 @@ CODE_SCALAR_CONTROL_UNION = "CATALOGUE_SCALAR_CONTROL_UNION"
 CODE_LAYOUT_CONSTRAINT = "CATALOGUE_LAYOUT_CONSTRAINT"
 CODE_REMOTE_IMAGE = "CATALOGUE_REMOTE_IMAGE"
 
-_BUTTON_TYPES = frozenset({"Button", "TextButton"})
+_BUTTON_TYPES = frozenset({"Button", "TextButton", "FilledButton", "OutlinedButton"})
 
 
 def _error(
@@ -237,9 +238,7 @@ class FrozenCatalogue:
         *,
         nodes: Mapping[NodeId, Node] | None = None,
     ) -> tuple[Diagnostic, ...]:
-        diags = list(
-            self.validate_props(node.type_id, node.props, node_id=node.id)
-        )
+        diags = list(self.validate_props(node.type_id, node.props, node_id=node.id))
         if node.type_id not in self.widgets:
             return tuple(diags)
         spec = self.widgets[node.type_id]
@@ -268,6 +267,71 @@ class FrozenCatalogue:
 
         if type_id in _BUTTON_TYPES:
             diags.extend(self._button_rules(node, nodes))
+
+        # Other scalar/control unions must not supply both representations.
+        if type_id not in _BUTTON_TYPES:
+            for name, slot in spec.slots.items():
+                if (
+                    slot.maximum == 1
+                    and name in props
+                    and props[name] is not None
+                    and node.slots.get(name)
+                ):
+                    diags.append(
+                        _error(
+                            CODE_SCALAR_CONTROL_UNION,
+                            "Single-child scalar/control unions cannot be populated both ways",
+                            path=("props", name),
+                            node_id=node.id,
+                        )
+                    )
+
+        if (
+            type_id == "Tabs"
+            and props.get("content") == {"kind": "empty"}
+            and (props.get("length", 1) != 1 or props.get("selected_index", 0) != 0)
+        ):
+            diags.append(
+                _error(
+                    CODE_LAYOUT_CONSTRAINT,
+                    "Starter tabs have one tab at index 0; replace content to change length or selection",
+                    node_id=node.id,
+                )
+            )
+
+        required_unions = {
+            "Chip": "label",
+            "ExpansionTile": "title",
+            "TabBar": "tabs",
+            "TabBarView": "controls",
+            "SafeArea": "content",
+            "RadioGroup": "content",
+            "Tabs": "content",
+        }
+        required_name = required_unions.get(type_id)
+        if (
+            required_name
+            and required_name not in props
+            and not node.slots.get(required_name)
+        ):
+            diags.append(
+                _error(
+                    CODE_REQUIRED_PROPERTY,
+                    f"{type_id} requires {required_name} as a property or child slot",
+                    path=("props", required_name),
+                    node_id=node.id,
+                )
+            )
+        for name, slot in spec.slots.items():
+            if slot.maximum is None and name in props and node.slots.get(name):
+                diags.append(
+                    _error(
+                        CODE_SCALAR_CONTROL_UNION,
+                        "A list property and child slot cannot both be populated",
+                        path=("props", name),
+                        node_id=node.id,
+                    )
+                )
 
         if type_id == "Checkbox":
             if "value" in props and props["value"] is None:

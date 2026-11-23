@@ -138,7 +138,11 @@ def _resolve_ref(schema: dict[str, Any], root: dict[str, Any]) -> dict[str, Any]
 
 
 def validate_against_schema(
-    instance: Any, schema: dict[str, Any], *, root: dict[str, Any] | None = None, path: str = "$"
+    instance: Any,
+    schema: dict[str, Any],
+    *,
+    root: dict[str, Any] | None = None,
+    path: str = "$",
 ) -> list[str]:
     """Hand-written structural JSON Schema check (jsonschema is not installed)."""
     root = root if root is not None else schema
@@ -184,7 +188,9 @@ def validate_against_schema(
         item_schema = schema["items"]
         for i, item in enumerate(instance):
             errors.extend(
-                validate_against_schema(item, item_schema, root=root, path=f"{path}[{i}]")
+                validate_against_schema(
+                    item, item_schema, root=root, path=f"{path}[{i}]"
+                )
             )
     return errors
 
@@ -254,7 +260,9 @@ def test_index_semantics_are_documented() -> None:
     drop_src = inspect.getsource(c.DropIntent)
     target_src = inspect.getsource(c.TargetKey)
     assert "Index AFTER removal" in drop_src
-    assert "BEFORE source removal; normalized by the resolver exactly once." in target_src
+    assert (
+        "BEFORE source removal; normalized by the resolver exactly once." in target_src
+    )
 
 
 def test_project_literal_defaults() -> None:
@@ -303,9 +311,8 @@ def test_reference_export_compiles_and_calls_ft_run_main() -> None:
     assert "run" in text
 
 
-def test_command_adt_has_ten_members() -> None:
+def test_command_adt_members() -> None:
     members = get_args(c.CommandADT)
-    assert len(members) == 10
     assert members == (
         c.InsertNode,
         c.DeleteNode,
@@ -315,6 +322,8 @@ def test_command_adt_has_ten_members() -> None:
         c.UnsetProperty,
         c.SetEvent,
         c.ReplaceProject,
+        c.RenameProject,
+        c.PasteNodes,
         c.Undo,
         c.Redo,
     )

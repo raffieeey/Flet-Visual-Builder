@@ -217,9 +217,7 @@ def test_replace_project_resets_history() -> None:
     dispatcher = HistoryDispatcher(column_with_texts(0))
     insert_text(dispatcher, "t0")
     other = column_with_texts(2)
-    result = run(
-        dispatcher, ReplaceProject(command_id="open", project=other.project)
-    )
+    result = run(dispatcher, ReplaceProject(command_id="open", project=other.project))
     assert result.status is CommandStatus.COMMITTED
     assert dispatcher.history_length == 0
     assert dispatcher.snapshot.project.nodes["root"].slots["controls"] == ("t0", "t1")
