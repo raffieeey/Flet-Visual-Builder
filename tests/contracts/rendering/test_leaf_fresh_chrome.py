@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import flet as ft
 
-from src.flet_visual_builder.contracts import RenderMode, Severity
-from src.flet_visual_builder.engine.runtime import CODE_OCCUPIED_SLOT, iter_controls
+from flet_visual_builder.contracts import RenderMode, Severity
+from flet_visual_builder.engine.runtime import CODE_OCCUPIED_SLOT, iter_controls
 
 from tests.contracts.rendering.helpers import (
     RENDERER,

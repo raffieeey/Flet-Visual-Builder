@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Asset,
     Diagnostic,
     EventSymbol,

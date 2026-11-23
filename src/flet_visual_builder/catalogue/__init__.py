@@ -8,11 +8,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
-from src.flet_visual_builder.catalogue.codecs import BUILTIN_IMAGE_PLACEHOLDER, CODECS
-from src.flet_visual_builder.catalogue.enum_manifest import COLORS, ICONS, TARGET_FLET
-from src.flet_visual_builder.catalogue.page import PAGE_PROPERTIES, PAGE_SPEC, PageSpec
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER, WIDGET_SPECS
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue.codecs import BUILTIN_IMAGE_PLACEHOLDER, CODECS
+from flet_visual_builder.catalogue.enum_manifest import COLORS, ICONS, TARGET_FLET
+from flet_visual_builder.catalogue.page import PAGE_PROPERTIES, PAGE_SPEC, PageSpec
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER, WIDGET_SPECS
+from flet_visual_builder.contracts import (
     Diagnostic,
     JsonObject,
     JsonValue,

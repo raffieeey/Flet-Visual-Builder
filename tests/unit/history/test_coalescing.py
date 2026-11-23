@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.flet_visual_builder.contracts import CommandStatus, Undo, UnsetProperty
-from src.flet_visual_builder.state.history_dispatcher import (
+from flet_visual_builder.contracts import CommandStatus, Undo, UnsetProperty
+from flet_visual_builder.state.history_dispatcher import (
     COALESCE_IDLE_SECONDS,
     HistoryDispatcher,
 )

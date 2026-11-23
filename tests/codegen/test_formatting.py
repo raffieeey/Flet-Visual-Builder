@@ -5,7 +5,7 @@ from pathlib import Path
 
 import black
 
-from src.flet_visual_builder.engine.formatting import (
+from flet_visual_builder.engine.formatting import (
     PINNED_BLACK_VERSION,
     black_mode,
     format_python,

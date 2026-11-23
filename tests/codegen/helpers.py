@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import (
     Asset,
     CallValue,
     ControlPlan,
@@ -16,7 +16,7 @@ from src.flet_visual_builder.contracts import (
     SequenceValue,
     ValueExpr,
 )
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
 
 SHA = "a" * 64
 

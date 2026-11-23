@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Mapping
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Asset,
     DocumentSnapshot,
     EventSymbol,

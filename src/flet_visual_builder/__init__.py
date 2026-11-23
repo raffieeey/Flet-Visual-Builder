@@ -1,1 +1,6 @@
-"""Architecture package for Flet Visual Builder (target Flet 1.0.1)."""
+"""Flet Visual Builder: design Flet interfaces, export clean Python."""
+
+from __future__ import annotations
+
+__version__ = "0.2.0"
+__all__ = ["__version__"]

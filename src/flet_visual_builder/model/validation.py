@@ -12,7 +12,7 @@ import re
 from collections.abc import Mapping
 from typing import Final
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Asset,
     Diagnostic,
     Node,

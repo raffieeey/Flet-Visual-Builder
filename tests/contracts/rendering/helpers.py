@@ -4,8 +4,8 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import (
     Asset,
     ControlPlan,
     Diagnostic,
@@ -17,8 +17,8 @@ from src.flet_visual_builder.contracts import (
     Project,
     Severity,
 )
-from src.flet_visual_builder.engine.lowering import Lowering
-from src.flet_visual_builder.engine.runtime import RuntimeRenderer
+from flet_visual_builder.engine.lowering import Lowering
+from flet_visual_builder.engine.runtime import RuntimeRenderer
 
 TINY_PNG = bytes.fromhex(
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"

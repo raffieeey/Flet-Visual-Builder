@@ -10,14 +10,14 @@ import json
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-from src.flet_visual_builder.catalogue.enum_manifest import (
+from flet_visual_builder.catalogue.enum_manifest import (
     COLORS,
     CONTROL_STATE,
     ENUM_FAMILIES,
     ICONS,
 )
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.contracts import (
     AssetValue,
     CallValue,
     Catalogue,
@@ -36,7 +36,7 @@ from src.flet_visual_builder.contracts import (
     SymbolRef,
     ValueExpr,
 )
-from src.flet_visual_builder.model.validation import validate_project
+from flet_visual_builder.model.validation import validate_project
 
 CODE_SYMBOL_NOT_ALLOWLISTED = "ENGINE_SYMBOL_NOT_ALLOWLISTED"
 CODE_ASSET_MISSING = "ENGINE_ASSET_MISSING"

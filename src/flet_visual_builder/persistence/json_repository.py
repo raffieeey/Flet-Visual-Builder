@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.flet_visual_builder.catalogue import FrozenCatalogue
-from src.flet_visual_builder.catalogue import catalogue as default_catalogue
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue import FrozenCatalogue
+from flet_visual_builder.catalogue import catalogue as default_catalogue
+from flet_visual_builder.contracts import (
     Asset,
     Diagnostic,
     EventSymbol,
@@ -21,12 +21,12 @@ from src.flet_visual_builder.contracts import (
     Project,
     Severity,
 )
-from src.flet_visual_builder.model.validation import (
+from flet_visual_builder.model.validation import (
     MAX_DEPTH,
     MAX_NODES,
     validate_project,
 )
-from src.flet_visual_builder.persistence.assets import (
+from flet_visual_builder.persistence.assets import (
     MAX_ASSET_BYTES,
     MAX_TOTAL_ASSET_BYTES,
     decode_data,
@@ -35,7 +35,7 @@ from src.flet_visual_builder.persistence.assets import (
     sha256_hex,
     verify_asset,
 )
-from src.flet_visual_builder.persistence.migrations import (
+from flet_visual_builder.persistence.migrations import (
     EditorHints,
     migrate_to_v2,
 )

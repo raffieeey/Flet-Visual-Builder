@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.flet_visual_builder.contracts import EditorTab, NodeId
+from flet_visual_builder.contracts import EditorTab, NodeId
 
 
 class EditorState:

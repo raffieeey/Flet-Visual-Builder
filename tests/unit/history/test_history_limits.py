@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.flet_visual_builder.contracts import CommandStatus
-from src.flet_visual_builder.state.history_dispatcher import (
+from flet_visual_builder.contracts import CommandStatus
+from flet_visual_builder.state.history_dispatcher import (
     HistoryDispatcher,
     MAX_HISTORY_ENTRIES,
     MAX_HISTORY_STRUCTURAL_BYTES,
@@ -29,7 +29,7 @@ def test_101st_entry_trims_oldest() -> None:
     # Current document still has every inserted node; only history is trimmed.
     assert all(f"n{i}" in dispatcher.snapshot.project.nodes for i in range(101))
     # Oldest snapshot (empty column) was dropped, so 100 undos stop after n0.
-    from src.flet_visual_builder.contracts import Undo
+    from flet_visual_builder.contracts import Undo
     from tests.unit.history.helpers import run
 
     for i in range(100):

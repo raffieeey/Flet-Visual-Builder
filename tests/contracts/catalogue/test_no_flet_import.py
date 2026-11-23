@@ -8,11 +8,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 
 MODULES = (
-    "src.flet_visual_builder.catalogue",
-    "src.flet_visual_builder.catalogue.widgets",
-    "src.flet_visual_builder.catalogue.page",
-    "src.flet_visual_builder.catalogue.codecs",
-    "src.flet_visual_builder.catalogue.enum_manifest",
+    "flet_visual_builder.catalogue",
+    "flet_visual_builder.catalogue.widgets",
+    "flet_visual_builder.catalogue.page",
+    "flet_visual_builder.catalogue.codecs",
+    "flet_visual_builder.catalogue.enum_manifest",
 )
 
 

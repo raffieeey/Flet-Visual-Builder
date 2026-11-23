@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     CommandADT,
     DropIntent,
     InsertNode,
     SetProperty,
 )
-from src.flet_visual_builder.state.history_dispatcher import HistoryDispatcher
+from flet_visual_builder.state.history_dispatcher import HistoryDispatcher
 from tests.unit.model.helpers import column_with_texts, make_node, make_snapshot
 
 __all__ = [

@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import Severity
-from src.flet_visual_builder.model.validation import event_symbol_name, validate_project
-from src.flet_visual_builder.persistence.json_repository import JsonRepository, load
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import Severity
+from flet_visual_builder.model.validation import event_symbol_name, validate_project
+from flet_visual_builder.persistence.json_repository import JsonRepository, load
 from tests.unit.persistence.helpers import diagnostic_blob
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"

@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.flet_visual_builder.catalogue.enum_manifest import COLORS, ICONS, TARGET_FLET
+from flet_visual_builder.catalogue.enum_manifest import COLORS, ICONS, TARGET_FLET
 
 MANIFEST = (
     Path(__file__).resolve().parents[3]

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import Unset
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import Unset
 
 from tests.contracts.catalogue.expected import (
     WIDGET_EVENTS,

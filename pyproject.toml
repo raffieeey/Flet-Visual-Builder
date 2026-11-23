@@ -4,10 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flet-visual-builder"
-version = "0.1.0"
-description = "Drag-and-drop UI builder for Flet apps"
+version = "0.2.0"
+description = "A visual drag-and-drop builder that turns Flet UI designs into clean, runnable Python."
+readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = { text = "MIT" }
+authors = [{ name = "raffieeey" }]
+keywords = ["flet", "gui", "builder", "drag-and-drop", "code-generation", "flutter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Desktop Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Code Generators",
+]
 dependencies = [
     "flet==1.0.1",
 ]
@@ -16,14 +30,32 @@ dependencies = [
 dev = [
     "flet[test]==1.0.1",
     "black==25.1.0",
-    "pytest>=7.2.0",
+    "pytest>=8.0",
     "pytest-asyncio>=1.1.0",
-    "uv",
 ]
 
+[project.urls]
+Homepage = "https://github.com/raffieeey/Flet-Visual-Builder"
+Issues = "https://github.com/raffieeey/Flet-Visual-Builder/issues"
+Source = "https://github.com/raffieeey/Flet-Visual-Builder"
+
 [project.scripts]
-flet-visual-builder = "src.main:main"
+flet-visual-builder = "flet_visual_builder.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["src", "src.*"]
+where = ["src"]
+include = ["flet_visual_builder*"]
+
+[tool.setuptools.package-data]
+flet_visual_builder = ["templates/*.json", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]

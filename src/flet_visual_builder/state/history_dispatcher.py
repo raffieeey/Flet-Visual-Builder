@@ -12,7 +12,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import replace
 from typing import Final
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Asset,
     CommandADT,
     CommandReducer,
@@ -30,7 +30,7 @@ from src.flet_visual_builder.contracts import (
     Undo,
     UnsetProperty,
 )
-from src.flet_visual_builder.model.reducer import Reducer
+from flet_visual_builder.model.reducer import Reducer
 
 MAX_HISTORY_ENTRIES: Final[int] = 100
 MAX_HISTORY_STRUCTURAL_BYTES: Final[int] = 64 * 1024 * 1024

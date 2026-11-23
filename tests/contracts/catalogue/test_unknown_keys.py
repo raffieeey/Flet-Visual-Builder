@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.flet_visual_builder.catalogue import CODE_UNKNOWN_PROPERTY, catalogue
-from src.flet_visual_builder.contracts import Severity
+from flet_visual_builder.catalogue import CODE_UNKNOWN_PROPERTY, catalogue
+from flet_visual_builder.contracts import Severity
 
 from tests.contracts.catalogue.expected import WIDGET_ORDER
 

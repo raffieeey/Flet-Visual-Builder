@@ -1,7 +1,7 @@
 """History-aware dispatch and editor UI state. No Flet import."""
 
-from src.flet_visual_builder.state.editor_state import EditorState
-from src.flet_visual_builder.state.history_dispatcher import (
+from flet_visual_builder.state.editor_state import EditorState
+from flet_visual_builder.state.history_dispatcher import (
     COALESCE_IDLE_SECONDS,
     HistoryDispatcher,
     MAX_HISTORY_ENTRIES,

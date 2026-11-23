@@ -1,8 +1,8 @@
 """Current enum forms only; legacy scroll none; Colors/Icons traps."""
 from __future__ import annotations
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.catalogue.enum_manifest import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.catalogue.enum_manifest import (
     ALIGNMENT,
     BOX_FIT,
     COLORS,
@@ -10,7 +10,7 @@ from src.flet_visual_builder.catalogue.enum_manifest import (
     ICONS,
     SCROLL_MODE,
 )
-from src.flet_visual_builder.contracts import LiteralValue, Severity, SymbolRef
+from flet_visual_builder.contracts import LiteralValue, Severity, SymbolRef
 
 
 def _errors(diags) -> list:
@@ -78,7 +78,7 @@ def test_hex_color_literal_accepted() -> None:
     color = catalogue.widget("Text").properties["color"]
     assert catalogue.validate_value(color, "#112233") == ()
     lowered = catalogue.lower_value(color, "#112233")
-    from src.flet_visual_builder.contracts import LiteralValue as LV
+    from flet_visual_builder.contracts import LiteralValue as LV
 
     assert lowered == LV("#112233")
 

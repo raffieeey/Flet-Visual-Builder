@@ -3,8 +3,8 @@
 No Flet import at runtime. History policy lives in T09.
 """
 
-from src.flet_visual_builder.model.reducer import Reducer, apply
-from src.flet_visual_builder.model.validation import (
+from flet_visual_builder.model.reducer import Reducer, apply
+from flet_visual_builder.model.validation import (
     MAX_DEPTH,
     MAX_NODES,
     ROOT_SLOT,

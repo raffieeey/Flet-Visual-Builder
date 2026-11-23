@@ -6,7 +6,7 @@ import copy
 
 import pytest
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Command,
     CommandReducer,
     CommandStatus,
@@ -23,8 +23,8 @@ from src.flet_visual_builder.contracts import (
     UnsetProperty,
     WrapNode,
 )
-from src.flet_visual_builder.model.reducer import Reducer, apply
-from src.flet_visual_builder.model.validation import MAX_DEPTH, MAX_NODES, validate_project
+from flet_visual_builder.model.reducer import Reducer, apply
+from flet_visual_builder.model.validation import MAX_DEPTH, MAX_NODES, validate_project
 from tests.unit.model.helpers import (
     clone_project,
     column_named,

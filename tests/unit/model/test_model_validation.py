@@ -6,12 +6,12 @@ import hashlib
 
 import pytest
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Asset,
     EventSymbol,
     SlotSpec,
 )
-from src.flet_visual_builder.model.validation import (
+from flet_visual_builder.model.validation import (
     MAX_DEPTH,
     MAX_NODES,
     event_symbol_name,
@@ -65,7 +65,7 @@ def test_node_id_must_match_map_key() -> None:
     project = make_snapshot(node).project
     # Bypass constructor identity: copy-like mismatch via object.__setattr__ is
     # blocked on frozen nodes, so build a Project with a wrong key.
-    from src.flet_visual_builder.contracts import Project
+    from flet_visual_builder.contracts import Project
 
     mismatched = Project(
         name="t",

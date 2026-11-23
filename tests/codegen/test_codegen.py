@@ -11,10 +11,10 @@ from types import ModuleType
 import flet as ft
 import pytest
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.catalogue.page import PAGE_PROPERTIES
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.catalogue.page import PAGE_PROPERTIES
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.contracts import (
     Asset,
     AssetValue,
     ControlPlan,
@@ -25,8 +25,8 @@ from src.flet_visual_builder.contracts import (
     Severity,
     SymbolRef,
 )
-from src.flet_visual_builder.engine.codegen import FILENAME, Codegen
-from src.flet_visual_builder.engine.formatting import format_python
+from flet_visual_builder.engine.codegen import FILENAME, Codegen
+from flet_visual_builder.engine.formatting import format_python
 from tests.codegen.helpers import (
     all_widgets_plan,
     make_node_plan,

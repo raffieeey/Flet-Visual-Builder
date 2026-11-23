@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from src.flet_visual_builder.model.validation import MAX_DEPTH, MAX_NODES
-from src.flet_visual_builder.persistence.assets import (
+from flet_visual_builder.model.validation import MAX_DEPTH, MAX_NODES
+from flet_visual_builder.persistence.assets import (
     MAX_ASSET_BYTES,
     MAX_TOTAL_ASSET_BYTES,
     encode_data,
     sha256_hex,
 )
-from src.flet_visual_builder.persistence.json_repository import (
+from flet_visual_builder.persistence.json_repository import (
     MAX_PROJECT_FILE_BYTES,
     MAX_STRUCTURAL_JSON_BYTES,
     JsonRepository,

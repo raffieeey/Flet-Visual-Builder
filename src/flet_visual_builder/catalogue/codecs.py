@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TypeGuard
 from urllib.parse import urlparse
 
-from src.flet_visual_builder.catalogue.enum_manifest import (
+from flet_visual_builder.catalogue.enum_manifest import (
     ALIGNMENT,
     BOX_FIT,
     COLORS,
@@ -21,7 +21,7 @@ from src.flet_visual_builder.catalogue.enum_manifest import (
     TEXT_ALIGN,
     THEME_MODE,
 )
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     AssetValue,
     CallValue,
     Diagnostic,

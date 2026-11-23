@@ -1,7 +1,7 @@
 """Supplementary validation rules (TDD v2 §2.4.3 lines 1637-1647)."""
 from __future__ import annotations
 
-from src.flet_visual_builder.catalogue import (
+from flet_visual_builder.catalogue import (
     CODE_BUTTON_CONTENT,
     CODE_CHECKBOX_TRISTATE,
     CODE_LAYOUT_CONSTRAINT,
@@ -9,7 +9,7 @@ from src.flet_visual_builder.catalogue import (
     CODE_SCALAR_CONTROL_UNION,
     catalogue,
 )
-from src.flet_visual_builder.contracts import Node, Severity
+from flet_visual_builder.contracts import Node, Severity
 
 
 def _node(

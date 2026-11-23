@@ -15,15 +15,15 @@ import keyword
 import math
 from collections.abc import Mapping, Sequence
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.catalogue.enum_manifest import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.catalogue.enum_manifest import (
     COLORS,
     CONTROL_STATE,
     ENUM_FAMILIES,
     ICONS,
 )
-from src.flet_visual_builder.catalogue.page import PAGE_PROPERTIES
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue.page import PAGE_PROPERTIES
+from flet_visual_builder.contracts import (
     AssetValue,
     CallValue,
     ControlPlan,
@@ -40,7 +40,7 @@ from src.flet_visual_builder.contracts import (
     SymbolRef,
     ValueExpr,
 )
-from src.flet_visual_builder.engine.formatting import FORMATTER_SPEC, format_python
+from flet_visual_builder.engine.formatting import FORMATTER_SPEC, format_python
 
 FILENAME = "generated_app.py"
 

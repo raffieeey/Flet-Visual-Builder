@@ -1,8 +1,8 @@
 """PageSpec matches TDD v2 §2.4.5."""
 from __future__ import annotations
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import Unset
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import Unset
 
 
 def test_page_keys_and_defaults() -> None:

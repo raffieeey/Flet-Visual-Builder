@@ -1,2 +1,5 @@
-import sys, pathlib
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import pathlib, sys
+
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))

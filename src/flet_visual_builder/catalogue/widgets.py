@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from src.flet_visual_builder.catalogue.codecs import BUILTIN_IMAGE_PLACEHOLDER
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue.codecs import BUILTIN_IMAGE_PLACEHOLDER
+from flet_visual_builder.contracts import (
     JsonValue,
     PropertySpec,
     SlotSpec,

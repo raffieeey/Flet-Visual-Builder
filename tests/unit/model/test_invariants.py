@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     CommandADT,
     CommandStatus,
     DeleteNode,
@@ -26,8 +26,8 @@ from src.flet_visual_builder.contracts import (
     UnsetProperty,
     WrapNode,
 )
-from src.flet_visual_builder.model.reducer import apply
-from src.flet_visual_builder.model.validation import validate_project
+from flet_visual_builder.model.reducer import apply
+from flet_visual_builder.model.validation import validate_project
 from tests.unit.model.helpers import (
     column_named,
     column_with_texts,

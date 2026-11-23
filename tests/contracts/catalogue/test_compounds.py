@@ -1,9 +1,9 @@
 """Compound codecs: padding/margin, border all-xor-sides, input-border kinds."""
 from __future__ import annotations
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.catalogue.codecs import CODE_BORDER_SHAPE, CODE_INPUT_BORDER
-from src.flet_visual_builder.contracts import CallValue, Severity, SymbolRef
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.catalogue.codecs import CODE_BORDER_SHAPE, CODE_INPUT_BORDER
+from flet_visual_builder.contracts import CallValue, Severity, SymbolRef
 
 
 def _errors(diags):
@@ -93,7 +93,7 @@ def test_input_border_state_map() -> None:
     }
     assert codec.validate(value) == ()
     lowered = codec.lower(value)
-    from src.flet_visual_builder.contracts import MappingValue
+    from flet_visual_builder.contracts import MappingValue
 
     assert isinstance(lowered, MappingValue)
 

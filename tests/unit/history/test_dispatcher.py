@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     Command,
     CommandDispatcher,
     CommandResult,
@@ -17,8 +17,8 @@ from src.flet_visual_builder.contracts import (
     SetProperty,
     Undo,
 )
-from src.flet_visual_builder.model.reducer import Reducer
-from src.flet_visual_builder.state.history_dispatcher import HistoryDispatcher
+from flet_visual_builder.model.reducer import Reducer
+from flet_visual_builder.state.history_dispatcher import HistoryDispatcher
 from tests.unit.history.helpers import column_with_texts, insert_text, make_node, run
 from tests.unit.model.helpers import clone_project, make_snapshot
 

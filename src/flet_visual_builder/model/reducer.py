@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import replace
 from typing import Final
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     CommandADT,
     CommandResult,
     CommandStatus,
@@ -29,7 +29,7 @@ from src.flet_visual_builder.contracts import (
     UnsetProperty,
     WrapNode,
 )
-from src.flet_visual_builder.model.validation import (
+from flet_visual_builder.model.validation import (
     MAX_DEPTH,
     MAX_NODES,
     ROOT_SLOT,

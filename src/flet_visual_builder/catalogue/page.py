@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from src.flet_visual_builder.contracts import PropertySpec
+from flet_visual_builder.contracts import PropertySpec
 
 
 def _p(

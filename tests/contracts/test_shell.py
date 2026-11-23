@@ -10,13 +10,13 @@ from typing import get_args
 import flet as ft
 import pytest
 
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.contracts import (
     EditorTab,
     RegionName,
     ShellMountPoints,
 )
-from src.flet_visual_builder.ui.shell import ShellImpl
-from src.flet_visual_builder.ui import shell as shell_mod
+from flet_visual_builder.ui.shell import ShellImpl
+from flet_visual_builder.ui import shell as shell_mod
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SHELL_PATH = REPO_ROOT / "src" / "flet_visual_builder" / "ui" / "shell.py"

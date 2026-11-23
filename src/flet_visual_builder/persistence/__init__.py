@@ -1,12 +1,12 @@
 """JSON persistence and legacy migration. Runtime Flet imports are forbidden."""
 
-from src.flet_visual_builder.persistence.assets import (
+from flet_visual_builder.persistence.assets import (
     MAX_ASSET_BYTES,
     MAX_TOTAL_ASSET_BYTES,
     deduplicate_assets,
     sha256_hex,
 )
-from src.flet_visual_builder.persistence.json_repository import (
+from flet_visual_builder.persistence.json_repository import (
     MAX_PROJECT_FILE_BYTES,
     MAX_STRUCTURAL_JSON_BYTES,
     JsonRepository,
@@ -16,7 +16,7 @@ from src.flet_visual_builder.persistence.json_repository import (
     loads,
     save,
 )
-from src.flet_visual_builder.persistence.migrations import EditorHints, migrate_to_v2
+from flet_visual_builder.persistence.migrations import EditorHints, migrate_to_v2
 
 __all__ = [
     "MAX_ASSET_BYTES",

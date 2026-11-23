@@ -9,9 +9,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 
 MODULES = (
-    "src.flet_visual_builder.state",
-    "src.flet_visual_builder.state.history_dispatcher",
-    "src.flet_visual_builder.state.editor_state",
+    "flet_visual_builder.state",
+    "flet_visual_builder.state.history_dispatcher",
+    "flet_visual_builder.state.editor_state",
 )
 
 

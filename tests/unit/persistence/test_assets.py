@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from src.flet_visual_builder.contracts import Asset
-from src.flet_visual_builder.persistence.assets import (
+from flet_visual_builder.contracts import Asset
+from flet_visual_builder.persistence.assets import (
     deduplicate_assets,
     encode_data,
     sha256_hex,
 )
-from src.flet_visual_builder.persistence.json_repository import (
+from flet_visual_builder.persistence.json_repository import (
     JsonRepository,
     dump,
     load,

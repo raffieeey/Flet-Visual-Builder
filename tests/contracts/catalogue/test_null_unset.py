@@ -1,8 +1,8 @@
 """U / ? / null / unset / false / 0 remain distinct (TDD v2 §2.4.1)."""
 from __future__ import annotations
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import LiteralValue, Severity, Unset, WidgetSpec
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import LiteralValue, Severity, Unset, WidgetSpec
 
 
 def _text() -> WidgetSpec:

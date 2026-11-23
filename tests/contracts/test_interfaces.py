@@ -12,7 +12,7 @@ from typing import Any, get_args
 
 import pytest
 
-from src.flet_visual_builder import contracts as c
+from flet_visual_builder import contracts as c
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS_PATH = REPO_ROOT / "src" / "flet_visual_builder" / "contracts.py"

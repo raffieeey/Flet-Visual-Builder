@@ -6,8 +6,8 @@ import base64
 import hashlib
 from collections.abc import Mapping
 
-from src.flet_visual_builder.contracts import Asset, Diagnostic, Severity
-from src.flet_visual_builder.model.validation import (
+from flet_visual_builder.contracts import Asset, Diagnostic, Severity
+from flet_visual_builder.model.validation import (
     MAX_ASSET_BYTES,
     MAX_TOTAL_ASSET_BYTES,
 )

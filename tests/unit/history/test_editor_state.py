@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import copy
 
-from src.flet_visual_builder.contracts import EditorTab
-from src.flet_visual_builder.state.editor_state import EditorState
-from src.flet_visual_builder.state.history_dispatcher import HistoryDispatcher
+from flet_visual_builder.contracts import EditorTab
+from flet_visual_builder.state.editor_state import EditorState
+from flet_visual_builder.state.history_dispatcher import HistoryDispatcher
 from tests.unit.history.helpers import column_with_texts, insert_text
 
 

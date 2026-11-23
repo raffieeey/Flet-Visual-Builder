@@ -12,14 +12,14 @@ from typing import Any
 
 import flet as ft
 
-from src.flet_visual_builder.catalogue.enum_manifest import (
+from flet_visual_builder.catalogue.enum_manifest import (
     COLORS,
     CONTROL_STATE,
     ENUM_FAMILIES,
     ICONS,
 )
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.contracts import (
     AssetValue,
     CallValue,
     ControlPlan,
@@ -35,7 +35,7 @@ from src.flet_visual_builder.contracts import (
     SymbolRef,
     ValueExpr,
 )
-from src.flet_visual_builder.engine.lowering import (
+from flet_visual_builder.engine.lowering import (
     ALLOWED_SYMBOL_PATHS,
     CODE_ASSET_MISSING,
     CODE_SYMBOL_NOT_ALLOWLISTED,

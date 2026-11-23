@@ -9,10 +9,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.catalogue.enum_manifest import ENUM_FAMILIES, ICONS
-from src.flet_visual_builder.contracts import Diagnostic, Severity
-from src.flet_visual_builder.model.validation import event_symbol_name
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.catalogue.enum_manifest import ENUM_FAMILIES, ICONS
+from flet_visual_builder.contracts import Diagnostic, Severity
+from flet_visual_builder.model.validation import event_symbol_name
 
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _CAMEL = re.compile(r"([a-z0-9])([A-Z])")

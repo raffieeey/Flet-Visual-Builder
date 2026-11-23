@@ -4,9 +4,9 @@ from __future__ import annotations
 import flet as ft
 import pytest
 
-from src.flet_visual_builder.catalogue.widgets import WIDGET_ORDER
-from src.flet_visual_builder.contracts import RenderMode, Severity
-from src.flet_visual_builder.engine.runtime import iter_controls
+from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
+from flet_visual_builder.contracts import RenderMode, Severity
+from flet_visual_builder.engine.runtime import iter_controls
 
 from tests.contracts.rendering.helpers import (
     RENDERER,

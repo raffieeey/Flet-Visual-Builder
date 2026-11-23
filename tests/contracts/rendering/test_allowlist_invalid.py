@@ -6,8 +6,8 @@ from pathlib import Path
 
 import flet as ft
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import (
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import (
     CallValue,
     ControlPlan,
     LiteralValue,
@@ -16,12 +16,12 @@ from src.flet_visual_builder.contracts import (
     Severity,
     SymbolRef,
 )
-from src.flet_visual_builder.engine.lowering import (
+from flet_visual_builder.engine.lowering import (
     CODE_SYMBOL_NOT_ALLOWLISTED,
     Lowering,
     is_allowlisted,
 )
-from src.flet_visual_builder.engine.runtime import (
+from flet_visual_builder.engine.runtime import (
     CODE_CONSTRUCT,
     RuntimeRenderer,
     resolve_symbol,

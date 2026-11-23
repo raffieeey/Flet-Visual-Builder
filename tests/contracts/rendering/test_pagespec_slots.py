@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import flet as ft
 
-from src.flet_visual_builder.catalogue import catalogue
-from src.flet_visual_builder.contracts import AssetValue, LiteralValue, RenderMode
-from src.flet_visual_builder.engine.runtime import iter_controls
+from flet_visual_builder.catalogue import catalogue
+from flet_visual_builder.contracts import AssetValue, LiteralValue, RenderMode
+from flet_visual_builder.engine.runtime import iter_controls
 
 from tests.contracts.rendering.helpers import (
     RENDERER,
