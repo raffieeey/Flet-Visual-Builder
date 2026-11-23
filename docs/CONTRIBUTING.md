@@ -66,8 +66,11 @@ These cost real debugging time. Confirm a signature before using an unfamiliar c
   `ft.DropdownOption(key=..., text=...)`; read `e.control.value`.
 - `ft.InputBorder.NONE` is deprecated: use `ft.NoInputBorder()`,
   `ft.OutlineInputBorder(side=ft.BorderSide(...))`.
-- `page.show_dialog(control)` / `page.pop_dialog()`; `ft.FilePicker` belongs in
-  `page.services`, not `page.overlay`.
+- `page.show_dialog(control)` / `page.pop_dialog()`.
+- `ft.FilePicker` methods are **async and return the result** (`path = await
+  picker.save_file(...)`), unlike the old `on_result` event. They also need a desktop portal:
+  without one the await never resolves, so this editor uses in-app path dialogs
+  (`ui/file_dialogs.py`) instead of a native picker.
 - `ft.Padding(left=, top=, right=, bottom=)`, `ft.Border.all(width, color)`,
   `ft.BorderRadius.all(radius)`.
 - Verify icon names with `hasattr(ft.Icons, "NAME")`; the enum has no proxy fallback.

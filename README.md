@@ -154,7 +154,7 @@ More detail in [docs/architecture.md](docs/architecture.md).
 ## Development
 
 ```bash
-python -m pytest -q          # 572 tests
+python -m pytest -q          # 576 tests
 python -m black --check src tests
 ```
 

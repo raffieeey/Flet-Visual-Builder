@@ -7,46 +7,36 @@ from pathlib import Path
 import flet as ft
 
 from flet_visual_builder.app_context import Workspace
-from flet_visual_builder.services.starter import starter_project
-from flet_visual_builder.ui import dialogs
+from flet_visual_builder.ui import dialogs, file_dialogs
 
 
 class FileActions:
-    """Thin command layer shared by the toolbar, menus, and shortcuts."""
+    """Thin command layer shared by the toolbar, menus, and shortcuts.
+
+    File choice goes through in-app dialogs rather than a native picker: the
+    native picker needs a desktop portal and hangs without one.
+    """
 
     def __init__(self, ws: Workspace) -> None:
         self.ws = ws
-        self._picker: ft.FilePicker | None = None
-        self._mode = ""
 
-    # ── pickers ───────────────────────────────────────────────────────
-    def _ensure_picker(self) -> ft.FilePicker:
-        if self._picker is None:
-            self._picker = ft.FilePicker(on_result=self._on_result)
-            try:
-                self.ws.page.services.append(self._picker)
-            except Exception:
-                pass
-        return self._picker
-
-    def _on_result(self, event: ft.FilePickerResultEvent) -> None:
-        mode = self._mode
-        if mode == "open":
-            if event.files and event.files[0].path:
-                self.ws.open_path(event.files[0].path)
-        elif mode == "save":
-            if event.path:
-                self.ws.save_to(event.path)
-        elif mode == "export":
-            if event.path:
-                self._write_export(event.path)
-
+    # ── files ─────────────────────────────────────────────────────────
     def open(self) -> None:
-        self._mode = "open"
-        self._ensure_picker().pick_files(
-            dialog_title="Open a Flet Visual Builder project",
-            allowed_extensions=["json"],
+        session = self.ws.session
+        self._show(
+            file_dialogs.open_dialog(
+                initial_path=str(
+                    session.path or file_dialogs.suggested_path(self.ws.project.name)
+                ),
+                recents=session.recents(),
+                on_confirm=self._open_path,
+                on_close=self._close_dialog,
+            )
         )
+
+    def _open_path(self, path: Path) -> None:
+        self._close_dialog()
+        self.ws.open_path(path)
 
     def save(self) -> None:
         if self.ws.session.path is None:
@@ -55,32 +45,48 @@ class FileActions:
         self.ws.save_to(self.ws.session.path)
 
     def save_as(self) -> None:
-        self._mode = "save"
-        self._ensure_picker().save_file(
-            dialog_title="Save project",
-            file_name=f"{self.ws.project.name}.fvb.json",
-            allowed_extensions=["json"],
+        self._show(
+            file_dialogs.save_dialog(
+                title="Save project",
+                initial_path=str(
+                    self.ws.session.path
+                    or file_dialogs.suggested_path(self.ws.project.name)
+                ),
+                suffix=".fvb.json",
+                confirm_label="Save",
+                on_confirm=self._save_path,
+                on_close=self._close_dialog,
+            )
         )
+
+    def _save_path(self, path: Path) -> None:
+        self._close_dialog()
+        self.ws.save_to(path)
 
     def export_code(self) -> None:
-        artifact = self.ws.artifact()
-        if artifact is None:
+        if self.ws.artifact() is None:
             self.ws.toast("Nothing to export: fix the diagnostics first", "error")
             return
-        self._mode = "export"
-        self._ensure_picker().save_file(
-            dialog_title="Export runnable Python",
-            file_name="app.py",
-            allowed_extensions=["py"],
+        self._show(
+            file_dialogs.confirm_export_dialog(
+                initial_path=file_dialogs.suggested_path(self.ws.project.name, ".py"),
+                on_confirm=self._export_path,
+                on_close=self._close_dialog,
+            )
         )
 
-    def _write_export(self, raw_path: str) -> None:
+    def _export_path(self, path: Path) -> None:
+        self._close_dialog()
+        self._write_export(path)
+
+    def _write_export(self, raw_path: str | Path) -> None:
         artifact = self.ws.artifact()
         if artifact is None:
             return
-        path = Path(raw_path)
+        path = Path(raw_path).expanduser()
         if path.suffix != ".py":
             path = path.with_suffix(".py")
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(artifact.source, encoding="utf-8")
         self.ws.toast(f"Exported {path.name}", "success")
 

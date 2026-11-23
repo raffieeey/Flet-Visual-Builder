@@ -68,3 +68,39 @@ def test_about_and_shortcuts_build(tmp_path: Path) -> None:
     actions.shortcuts()
     titles = [dialog.title.value for dialog in page.dialogs]
     assert titles == ["About Flet Visual Builder", "Keyboard shortcuts"]
+
+
+def test_save_as_opens_the_in_app_dialog(tmp_path: Path) -> None:
+    _, actions, page = make(tmp_path)
+    actions.save_as()
+    assert len(page.dialogs) == 1
+    assert page.dialogs[0].title.value == "Save project"
+
+
+def test_save_path_writes_the_document(tmp_path: Path) -> None:
+    ws, actions, _ = make(tmp_path)
+    target = tmp_path / "written.fvb.json"
+    actions._save_path(target)
+    assert target.exists()
+    assert ws.session.path == target
+    assert ws.session.dirty is False
+
+
+def test_open_dialog_lists_recent_projects(tmp_path: Path) -> None:
+    ws, actions, page = make(tmp_path)
+    project = tmp_path / "recent.fvb.json"
+    ws.save_to(project)
+    actions.open()
+    dialog = page.dialogs[-1]
+    assert dialog.title.value == "Open project"
+
+
+def test_export_dialog_and_write(tmp_path: Path) -> None:
+    ws, actions, page = make(tmp_path)
+    actions.export_code()
+    assert page.dialogs[-1].title.value == "Export Python"
+    target = tmp_path / "out.py"
+    actions._export_path(target)
+    assert target.read_text(encoding="utf-8").startswith(
+        '"""Flet Visual Builder export'
+    )
