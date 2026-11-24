@@ -17,8 +17,10 @@ from flet_visual_builder.contracts import (
     Diagnostic,
     EventSymbol,
     JsonValue,
+    Navigate,
     Node,
     Project,
+    ScreenMeta,
     Severity,
 )
 from flet_visual_builder.model.validation import (
@@ -53,8 +55,8 @@ V2_REQUIRED = (
     "catalogue_version",
     "target_flet",
 )
-V2_OPTIONAL_ENVELOPE = frozenset({"format"})
-NODE_KEYS = frozenset({"id", "type_id", "props", "slots", "events"})
+V2_OPTIONAL_ENVELOPE = frozenset({"format", "screens", "initial_route"})
+NODE_KEYS = frozenset({"id", "type_id", "props", "slots", "events", "actions"})
 ASSET_KEYS = frozenset({"id", "media_type", "sha256", "data"})
 
 
@@ -234,6 +236,10 @@ class JsonRepository:
                     event: {"name": symbol.name}
                     for event, symbol in node.events.items()
                 },
+                "actions": {
+                    event: {"type": "navigate", "route": action.route}
+                    for event, action in node.actions.items()
+                },
             }
         return {
             "name": project.name,
@@ -241,7 +247,12 @@ class JsonRepository:
             "root_ids": list(project.root_ids),
             "nodes": nodes,
             "assets": assets,
-            "schema_version": 2,
+            "screens": {
+                root_id: {"title": meta.title, "route": meta.route}
+                for root_id, meta in project.screens.items()
+            },
+            "initial_route": project.initial_route,
+            "schema_version": 3,
             "catalogue_version": 1,
             "target_flet": "1.0.1",
         }
@@ -357,7 +368,7 @@ class JsonRepository:
                 editor_hints=outcome.editor_hints,
                 migrated_from=outcome.source_version,
             )
-        if version == 2 and not isinstance(version, bool):
+        if version in (2, 3) and not isinstance(version, bool):
             decoded = self._decode_v2(parsed)
             return decoded
         return PersistenceResult(
@@ -393,7 +404,7 @@ class JsonRepository:
         if errors:
             return PersistenceResult(project=None, diagnostics=tuple(errors))
 
-        if data["schema_version"] != 2 or isinstance(data["schema_version"], bool):
+        if data["schema_version"] not in (2, 3) or isinstance(data["schema_version"], bool):
             errors.append(
                 _error(
                     "schema.unsupported",
@@ -518,12 +529,56 @@ class JsonRepository:
                 diagnostics=(_error("schema.type", "page must be an object"),),
             )
 
+        screens_raw = data.get("screens", {})
+        screens: dict[str, ScreenMeta] = {}
+        if not isinstance(screens_raw, dict):
+            errors.append(
+                _error("schema.type", "screens must be an object", path=("screens",))
+            )
+        else:
+            for key, meta_raw in screens_raw.items():
+                if not isinstance(key, str) or not isinstance(meta_raw, dict):
+                    errors.append(
+                        _error(
+                            "schema.screen",
+                            "Each screen entry must be an object",
+                            path=("screens", str(key)),
+                        )
+                    )
+                    continue
+                title = meta_raw.get("title")
+                route = meta_raw.get("route")
+                if not isinstance(title, str) or not isinstance(route, str):
+                    errors.append(
+                        _error(
+                            "schema.screen",
+                            "Screen title and route must be strings",
+                            path=("screens", key),
+                        )
+                    )
+                    continue
+                screens[key] = ScreenMeta(title=title, route=route)
+        initial_route = data.get("initial_route", "/")
+        if not isinstance(initial_route, str):
+            errors.append(
+                _error(
+                    "schema.type",
+                    "initial_route must be a string",
+                    path=("initial_route",),
+                )
+            )
+            initial_route = "/"
+        if errors:
+            return PersistenceResult(project=None, diagnostics=tuple(errors))
+
         project = Project(
             name=name,
             page=page,
             root_ids=tuple(str(item) for item in root_ids_raw),
             nodes=nodes,
             assets=assets,
+            screens=screens,
+            initial_route=initial_route,
         )
         return self._validate_project(project)
 
@@ -704,6 +759,63 @@ class JsonRepository:
                     node_id=node_id,
                 )
             ]
+        actions_raw = raw.get("actions", {})
+        actions: dict[str, Navigate] = {}
+        if not isinstance(actions_raw, dict):
+            errors.append(
+                _error(
+                    "schema.type",
+                    f"Node {node_id} actions must be an object",
+                    path=("nodes", key, "actions"),
+                    node_id=node_id,
+                )
+            )
+        else:
+            for event_name, action_raw in actions_raw.items():
+                if not isinstance(event_name, str) or not isinstance(action_raw, dict):
+                    errors.append(
+                        _error(
+                            "schema.action",
+                            "Each action must be an object keyed by an event name",
+                            path=("nodes", key, "actions"),
+                            node_id=node_id,
+                        )
+                    )
+                    continue
+                if action_raw.get("type") != "navigate":
+                    errors.append(
+                        _error(
+                            "schema.action",
+                            f"Unsupported action type {action_raw.get('type')!r}",
+                            path=("nodes", key, "actions", event_name),
+                            node_id=node_id,
+                        )
+                    )
+                    continue
+                route = action_raw.get("route")
+                if not isinstance(route, str):
+                    errors.append(
+                        _error(
+                            "schema.action",
+                            "navigate action needs a string route",
+                            path=("nodes", key, "actions", event_name),
+                            node_id=node_id,
+                        )
+                    )
+                    continue
+                try:
+                    actions[event_name] = Navigate(route)
+                except ValueError as exc:
+                    errors.append(
+                        _error(
+                            "schema.action",
+                            str(exc),
+                            path=("nodes", key, "actions", event_name),
+                            node_id=node_id,
+                        )
+                    )
+        if errors:
+            return None, errors
         return (
             Node(
                 id=node_id,
@@ -711,6 +823,7 @@ class JsonRepository:
                 props=props,
                 slots=slots,
                 events=events,
+                actions=actions,
             ),
             [],
         )

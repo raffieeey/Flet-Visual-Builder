@@ -28,7 +28,7 @@ MAX_NODE_ID_LENGTH: Final[int] = 64
 MAX_ASSET_BYTES: Final[int] = 4 * 1024 * 1024
 MAX_TOTAL_ASSET_BYTES: Final[int] = 16 * 1024 * 1024
 ROOT_SLOT: Final[str] = "controls"
-SUPPORTED_SCHEMA_VERSION: Final[int] = 2
+SUPPORTED_SCHEMA_VERSION: Final[int] = 3
 SUPPORTED_CATALOGUE_VERSION: Final[int] = 1
 SUPPORTED_TARGET_FLET: Final[str] = "1.0.1"
 
@@ -40,6 +40,8 @@ from flet_visual_builder.catalogue.widgets import WIDGET_SPECS
 STRUCTURAL_SLOTS: Final[Mapping[str, Mapping[str, SlotSpec]]] = {
     type_id: spec.slots for type_id, spec in WIDGET_SPECS.items()
 }
+
+from flet_visual_builder.model.screens import screen_entries
 
 
 def is_identifier_safe_node_id(node_id: str) -> bool:
@@ -353,10 +355,66 @@ def _validate_assets(assets: Mapping[str, Asset]) -> list[Diagnostic]:
     return errors
 
 
+
+def _validate_screens(project: Project) -> list[Diagnostic]:
+    errors: list[Diagnostic] = []
+    for screen_id in project.screens:
+        if screen_id not in project.root_ids:
+            errors.append(
+                _error(
+                    "screen.unknown",
+                    f"Screen metadata for unknown root {screen_id!r}",
+                    path=("screens", screen_id),
+                    node_id=screen_id,
+                )
+            )
+    seen_routes: dict[str, NodeId] = {}
+    for root_id, meta in screen_entries(project):
+        if not meta.title.strip():
+            errors.append(
+                _error(
+                    "screen.title",
+                    "Screen title must be non-empty",
+                    path=("screens", root_id),
+                    node_id=root_id,
+                )
+            )
+        route = meta.route
+        if not route.startswith("/") or any(ch.isspace() for ch in route):
+            errors.append(
+                _error(
+                    "screen.route",
+                    f"Invalid route {route!r}",
+                    path=("screens", root_id),
+                    node_id=root_id,
+                )
+            )
+        if route in seen_routes:
+            errors.append(
+                _error(
+                    "screen.route.duplicate",
+                    f"Route {route!r} is used by more than one screen",
+                    path=("screens", root_id),
+                    node_id=root_id,
+                )
+            )
+        seen_routes[route] = root_id
+    if project.initial_route not in seen_routes:
+        errors.append(
+            _error(
+                "screen.initial",
+                f"initial_route {project.initial_route!r} matches no screen",
+                path=("initial_route",),
+            )
+        )
+    return errors
+
+
 def validate_project(project: Project) -> tuple[Diagnostic, ...]:
     """Return ERROR diagnostics for every violated §2.3.4 invariant."""
     errors: list[Diagnostic] = []
     errors.extend(_validate_versions(project))
+    errors.extend(_validate_screens(project))
     errors.extend(_validate_assets(project.assets))
 
     nodes = project.nodes

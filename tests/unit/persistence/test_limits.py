@@ -33,7 +33,7 @@ def _write(path: Path, payload: object) -> None:
 
 def test_unknown_schema_version_does_not_overwrite_input(tmp_path: Path) -> None:
     repo = JsonRepository()
-    for version in ("3", "9.9", 3):
+    for version in ("9.9", 4, "4"):
         path = tmp_path / f"future-{version}.json"
         original = json.dumps(
             {"name": "x", "schema_version": version, "tree": {}},

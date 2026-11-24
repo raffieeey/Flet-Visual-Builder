@@ -9,7 +9,7 @@ from __future__ import annotations
 import keyword
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Protocol, TypeAlias
 
@@ -51,12 +51,27 @@ class EventSymbol:
 
 
 @dataclass(frozen=True, slots=True)
+class Navigate:
+    """A click action that moves the running app to another screen."""
+
+    route: str
+
+    def __post_init__(self) -> None:
+        if not self.route.startswith("/") or " " in self.route:
+            raise ValueError("route must start with '/' and contain no spaces")
+
+
+ActionADT: TypeAlias = Navigate
+
+
+@dataclass(frozen=True, slots=True)
 class Node:
     id: NodeId
     type_id: str
     props: JsonObject
     slots: Mapping[str, tuple[NodeId, ...]]
     events: Mapping[str, EventSymbol]
+    actions: Mapping[str, ActionADT] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,13 +83,23 @@ class Asset:
 
 
 @dataclass(frozen=True, slots=True)
+class ScreenMeta:
+    """Title and route for one screen (a root node in ``root_ids``)."""
+
+    title: str
+    route: str
+
+
+@dataclass(frozen=True, slots=True)
 class Project:
     name: str
     page: JsonObject
     root_ids: tuple[NodeId, ...]
     nodes: Mapping[NodeId, Node]
     assets: Mapping[str, Asset]
-    schema_version: Literal[2] = 2
+    screens: Mapping[NodeId, ScreenMeta] = field(default_factory=dict)
+    initial_route: str = "/"
+    schema_version: Literal[3] = 3
     catalogue_version: Literal[1] = 1
     target_flet: Literal["1.0.1"] = "1.0.1"
 
@@ -155,6 +180,40 @@ class RenameProject(Command):
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class SetScreen(Command):
+    """Rename a screen, change its route, or make it the initial screen."""
+
+    screen_id: NodeId
+    title: str
+    route: str
+    initial: bool = False
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class AddScreen(Command):
+    """Append a new screen whose root is ``node`` (a fresh, empty root)."""
+
+    node: Node
+    title: str
+    route: str
+    initial: bool = False
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class DeleteScreen(Command):
+    screen_id: NodeId
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SetAction(Command):
+    """Bind (or clear) a click action such as navigation on one event."""
+
+    node_id: NodeId
+    event_name: str
+    action: ActionADT | None = None
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class PasteNodes(Command):
     """Insert a complete subtree atomically (used by duplicate and paste).
 
@@ -187,6 +246,10 @@ CommandADT: TypeAlias = (
     | ReplaceProject
     | RenameProject
     | PasteNodes
+    | SetScreen
+    | AddScreen
+    | DeleteScreen
+    | SetAction
     | Undo
     | Redo
 )

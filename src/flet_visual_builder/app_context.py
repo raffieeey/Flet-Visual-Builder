@@ -31,10 +31,12 @@ from flet_visual_builder.catalogue import (
     catalogue as default_catalogue,
 )
 from flet_visual_builder.contracts import (
+    AddScreen,
     CommandADT,
     CommandResult,
     CommandStatus,
     DeleteNode,
+    DeleteScreen,
     Diagnostic,
     DocumentSnapshot,
     DropIntent,
@@ -52,8 +54,10 @@ from flet_visual_builder.contracts import (
     Redo,
     RenameProject,
     ReplaceProject,
+    SetAction,
     SetEvent,
     SetProperty,
+    SetScreen,
     Undo,
     UnsetProperty,
     WrapNode,
@@ -61,6 +65,11 @@ from flet_visual_builder.contracts import (
 from flet_visual_builder.engine.codegen import Codegen
 from flet_visual_builder.engine.lowering import Lowering
 from flet_visual_builder.engine.runtime import RuntimeRenderer
+from flet_visual_builder.model.screens import (
+    effective_routes,
+    meta_for,
+    screen_entries,
+)
 from flet_visual_builder.model.validation import event_symbol_name
 from flet_visual_builder.persistence.json_repository import (
     JsonRepository,
@@ -149,6 +158,7 @@ class Workspace:
         self._autosave_running = False
         self._closed = False
         self.editor.selection = project.root_ids[0] if project.root_ids else None
+        self.editor.active_screen = self.editor.selection
 
     # ── document access ───────────────────────────────────────────────
     @property
@@ -319,9 +329,11 @@ class Workspace:
         return result
 
     def _drop_stale_selection(self) -> None:
+        roots = self.project.root_ids
         if self.editor.selection and self.editor.selection not in self.project.nodes:
-            roots = self.project.root_ids
             self.editor.selection = roots[0] if roots else None
+        if self.editor.active_screen not in roots:
+            self.editor.active_screen = roots[0] if roots else None
 
     def new_node(self, type_id: str) -> Node:
         spec = self.catalogue.widgets[type_id]
@@ -566,6 +578,90 @@ class Workspace:
     def device_width(self) -> int | None:
         return DEVICE_WIDTHS.get(self.device)
 
+    # ── screens ───────────────────────────────────────────────────────
+    def screen_entries(self) -> tuple[tuple[NodeId, "ScreenMeta"], ...]:
+        return screen_entries(self.project)
+
+    def screen_meta(self, screen_id: NodeId):
+        return meta_for(self.project, screen_id)
+
+    def screen_route(self, screen_id: NodeId) -> str | None:
+        meta = meta_for(self.project, screen_id)
+        return meta.route if meta is not None else None
+
+    def routes(self) -> dict[str, NodeId]:
+        return effective_routes(self.project)
+
+    def active_screen(self) -> NodeId | None:
+        if self.editor.active_screen in self.project.root_ids:
+            return self.editor.active_screen
+        return self.project.root_ids[0] if self.project.root_ids else None
+
+    def select_screen(self, screen_id: NodeId) -> None:
+        if screen_id not in self.project.root_ids:
+            return
+        self.editor.active_screen = screen_id
+        self.editor.selection = screen_id
+        self.refresh(Refresh.ALL)
+
+    def add_screen(self, title: str | None = None, route: str | None = None) -> CommandResult:
+        index = len(self.project.root_ids)
+        node = self.new_node("Column")
+        result = self.dispatch(
+            AddScreen(
+                command_id=self._command_id("screen"),
+                node=node,
+                title=title or f"Screen {index + 1}",
+                route=route or f"/screen-{index + 1}",
+            )
+        )
+        if result.status is CommandStatus.COMMITTED:
+            self.editor.active_screen = node.id
+            self.editor.selection = node.id
+            self.refresh(Refresh.ALL)
+        return result
+
+    def update_screen(
+        self,
+        screen_id: NodeId,
+        *,
+        title: str,
+        route: str,
+        initial: bool = False,
+    ) -> CommandResult:
+        return self.dispatch(
+            SetScreen(
+                command_id=self._command_id("screen"),
+                screen_id=screen_id,
+                title=title,
+                route=route,
+                initial=initial,
+            )
+        )
+
+    def delete_screen(self, screen_id: NodeId) -> CommandResult:
+        result = self.dispatch(
+            DeleteScreen(command_id=self._command_id("screen"), screen_id=screen_id)
+        )
+        if result.status is CommandStatus.COMMITTED:
+            screens = self.project.root_ids
+            self.editor.active_screen = screens[0] if screens else None
+            self.editor.selection = self.editor.active_screen
+            self.refresh(Refresh.ALL)
+        return result
+
+    def set_action(
+        self, node_id: NodeId, event_name: str, route: str | None
+    ) -> CommandResult:
+        return self.dispatch(
+            SetAction(
+                command_id=self._command_id("action"),
+                node_id=node_id,
+                event_name=event_name,
+                action=Navigate(route) if route else None,
+            )
+        )
+
     def set_text_focus(self, focused: bool) -> None:
         """Track text-input focus so destructive shortcuts stay inert while typing."""
         self.editor.text_focus = focused
@@ -640,6 +736,7 @@ class Workspace:
         if dirty:
             self.session.mark_dirty()
         self.editor.selection = project.root_ids[0] if project.root_ids else None
+        self.editor.active_screen = self.editor.selection
         self.editor.hover = None
         self.refresh(Refresh.PROJECT)
 

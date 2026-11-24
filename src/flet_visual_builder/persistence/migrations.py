@@ -31,7 +31,7 @@ PROP_ALIASES: dict[tuple[str, str], str] = {
 
 EVENT_PROP_NAMES: frozenset[str] = frozenset({"on_click", "on_change"})
 
-SUPPORTED_SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSION = 3
 SUPPORTED_CATALOGUE_VERSION = 1
 SUPPORTED_TARGET_FLET = "1.0.1"
 
@@ -200,6 +200,8 @@ def _migrate_0_1_to_v2(
         "root_ids": [parsed.id],
         "nodes": nodes_v2,
         "assets": {},
+        "screens": {},
+        "initial_route": "/",
         "schema_version": SUPPORTED_SCHEMA_VERSION,
         "catalogue_version": SUPPORTED_CATALOGUE_VERSION,
         "target_flet": SUPPORTED_TARGET_FLET,

@@ -269,7 +269,7 @@ def test_project_literal_defaults() -> None:
     schema = c.Project.__dataclass_fields__["schema_version"]
     catalogue = c.Project.__dataclass_fields__["catalogue_version"]
     target = c.Project.__dataclass_fields__["target_flet"]
-    assert schema.default == 2
+    assert schema.default == 3
     assert catalogue.default == 1
     assert target.default == "1.0.1"
     empty_nodes: dict[str, c.Node] = {}
@@ -281,7 +281,7 @@ def test_project_literal_defaults() -> None:
         nodes=empty_nodes,
         assets=empty_assets,
     )
-    assert project.schema_version == 2
+    assert project.schema_version == 3
     assert project.catalogue_version == 1
     assert project.target_flet == "1.0.1"
 
@@ -324,6 +324,10 @@ def test_command_adt_members() -> None:
         c.ReplaceProject,
         c.RenameProject,
         c.PasteNodes,
+        c.SetScreen,
+        c.AddScreen,
+        c.DeleteScreen,
+        c.SetAction,
         c.Undo,
         c.Redo,
     )

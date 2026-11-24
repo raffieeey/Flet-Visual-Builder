@@ -7,16 +7,19 @@ from dataclasses import replace
 from typing import Final
 
 from flet_visual_builder.contracts import (
+    AddScreen,
     CommandADT,
     CommandResult,
     CommandStatus,
     DeleteNode,
+    DeleteScreen,
     Diagnostic,
     DocumentSnapshot,
     DropIntent,
     InsertNode,
     JsonValue,
     MoveNode,
+    Navigate,
     Node,
     NodeId,
     PasteNodes,
@@ -24,7 +27,10 @@ from flet_visual_builder.contracts import (
     Redo,
     RenameProject,
     ReplaceProject,
+    ScreenMeta,
+    SetAction,
     SetEvent,
+    SetScreen,
     SetProperty,
     Severity,
     Undo,
@@ -49,6 +55,11 @@ from flet_visual_builder.model.validation import (
     validate_index,
     validate_occupancy,
     validate_project,
+)
+from flet_visual_builder.model.screens import (
+    effective_routes,
+    route_for,
+    screen_entries,
 )
 
 _MISSING: Final[object] = object()
@@ -914,6 +925,236 @@ def _apply_paste(snapshot: DocumentSnapshot, command: PasteNodes) -> CommandResu
     return _commit(snapshot, new_project, command.command_id, frozenset(incoming))
 
 
+
+_ROUTE_MAX = 64
+
+
+def _title_errors(title: str) -> tuple[Diagnostic, ...]:
+    if not title.strip():
+        return (_error("screen.title", "Screen title must be non-empty"),)
+    if len(title.strip()) > 40:
+        return (_error("screen.title", "Screen title must be 40 characters or fewer"),)
+    return ()
+
+
+def _route_errors(
+    project: Project, route: str, *, exclude: NodeId | None = None
+) -> tuple[Diagnostic, ...]:
+    if not route.startswith("/"):
+        return (_error("screen.route", "Route must start with '/'"),)
+    if not route.strip() or any(ch.isspace() for ch in route):
+        return (_error("screen.route", "Route must be a single path token"),)
+    if len(route) > _ROUTE_MAX:
+        return (_error("screen.route", f"Route must be {_ROUTE_MAX} characters or fewer"),)
+    for root_id, meta in screen_entries(project):
+        if root_id != exclude and meta.route == route:
+            return (
+                _error(
+                    "screen.route.duplicate",
+                    f"Route {route!r} is already used by another screen",
+                    node_id=root_id,
+                ),
+            )
+    return ()
+
+
+def _strip_route_actions(project: Project, routes: set[str]) -> Project:
+    """Drop click actions that point at routes which no longer exist."""
+    if not routes:
+        return project
+    nodes = dict(project.nodes)
+    changed = False
+    for node_id, node in project.nodes.items():
+        stale = [
+            event
+            for event, action in node.actions.items()
+            if isinstance(action, Navigate) and action.route in routes
+        ]
+        if not stale:
+            continue
+        actions = dict(node.actions)
+        for event in stale:
+            actions.pop(event, None)
+        nodes[node_id] = replace(node, actions=actions)
+        changed = True
+    if not changed:
+        return project
+    return replace(project, nodes=nodes)
+
+
+def _apply_set_screen(snapshot: DocumentSnapshot, command: SetScreen) -> CommandResult:
+    project = snapshot.project
+    if command.screen_id not in project.root_ids:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error(
+                "screen.missing",
+                f"Screen {command.screen_id!r} does not exist",
+                node_id=command.screen_id,
+            ),
+        )
+    errors = _title_errors(command.title) or _route_errors(
+        project, command.route, exclude=command.screen_id
+    )
+    if errors:
+        return _reject(snapshot, command.command_id, *errors)
+
+    meta = ScreenMeta(title=command.title.strip(), route=command.route)
+    previous = route_for(project, command.screen_id)
+    if project.screens.get(command.screen_id) == meta and not command.initial:
+        if previous is None or project.initial_route == previous:
+            return _noop(snapshot, command.command_id)
+
+    screens = dict(project.screens)
+    screens[command.screen_id] = meta
+    initial = project.initial_route
+    if command.initial:
+        initial = meta.route
+    elif previous is not None and initial == previous:
+        initial = meta.route
+    if screens == dict(project.screens) and initial == project.initial_route:
+        return _noop(snapshot, command.command_id)
+    return _commit(
+        snapshot,
+        replace(project, screens=screens, initial_route=initial),
+        command.command_id,
+        frozenset({command.screen_id}),
+    )
+
+
+def _apply_add_screen(snapshot: DocumentSnapshot, command: AddScreen) -> CommandResult:
+    project = snapshot.project
+    fresh = _fresh_node_errors(command.node, existing=project.nodes)
+    if fresh:
+        return _reject(snapshot, command.command_id, *fresh)
+    errors = _title_errors(command.title) or _route_errors(project, command.route)
+    if errors:
+        return _reject(snapshot, command.command_id, *errors)
+    limits = _limit_errors(
+        node_count=len(project.nodes) + 1, depth=0, node_id=command.node.id
+    )
+    if limits:
+        return _reject(snapshot, command.command_id, *limits)
+
+    nodes = dict(project.nodes)
+    nodes[command.node.id] = command.node
+    screens = dict(project.screens)
+    screens[command.node.id] = ScreenMeta(
+        title=command.title.strip(), route=command.route
+    )
+    initial = command.route if command.initial else project.initial_route
+    return _commit(
+        snapshot,
+        replace(
+            project,
+            root_ids=(*project.root_ids, command.node.id),
+            nodes=nodes,
+            screens=screens,
+            initial_route=initial,
+        ),
+        command.command_id,
+        frozenset({command.node.id}),
+    )
+
+
+def _apply_delete_screen(
+    snapshot: DocumentSnapshot, command: DeleteScreen
+) -> CommandResult:
+    project = snapshot.project
+    if command.screen_id not in project.root_ids:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error(
+                "screen.missing",
+                f"Screen {command.screen_id!r} does not exist",
+                node_id=command.screen_id,
+            ),
+        )
+    if len(project.root_ids) <= 1:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error("screen.last", "A document must keep at least one screen"),
+        )
+
+    removed_nodes = subtree_ids(project, command.screen_id)
+    removed_route = route_for(project, command.screen_id)
+    nodes = {
+        node_id: node
+        for node_id, node in project.nodes.items()
+        if node_id not in removed_nodes
+    }
+    roots = tuple(root for root in project.root_ids if root != command.screen_id)
+    # Materialise the surviving metadata first: derived defaults depend on the
+    # screen's index, so deleting an earlier screen would otherwise renumber routes.
+    screens = {
+        root_id: meta
+        for root_id, meta in screen_entries(project)
+        if root_id != command.screen_id
+    }
+    candidate = replace(
+        project, root_ids=roots, nodes=nodes, screens=screens
+    )
+    initial = project.initial_route
+    if removed_route is not None and initial == removed_route:
+        initial = screen_entries(candidate)[0][1].route
+    candidate = replace(candidate, initial_route=initial)
+    if removed_route is not None:
+        candidate = _strip_route_actions(candidate, {removed_route})
+    return _commit(
+        snapshot, candidate, command.command_id, frozenset(removed_nodes)
+    )
+
+
+def _apply_set_action(snapshot: DocumentSnapshot, command: SetAction) -> CommandResult:
+    project = snapshot.project
+    node = project.nodes.get(command.node_id)
+    if node is None:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error(
+                "node.missing",
+                f"Node {command.node_id!r} does not exist",
+                node_id=command.node_id,
+            ),
+        )
+    if not command.event_name:
+        return _reject(
+            snapshot,
+            command.command_id,
+            _error("event.name", "Event name must be non-empty", node_id=node.id),
+        )
+    if command.action is None:
+        if command.event_name not in node.actions:
+            return _noop(snapshot, command.command_id)
+        actions = dict(node.actions)
+        del actions[command.event_name]
+    else:
+        if command.action.route not in effective_routes(project):
+            return _reject(
+                snapshot,
+                command.command_id,
+                _error(
+                    "action.route",
+                    f"Route {command.action.route!r} does not match any screen",
+                    node_id=node.id,
+                ),
+            )
+        if node.actions.get(command.event_name) == command.action:
+            return _noop(snapshot, command.command_id)
+        actions = dict(node.actions)
+        actions[command.event_name] = command.action
+
+    nodes = dict(project.nodes)
+    nodes[node.id] = replace(node, actions=actions)
+    return _commit(
+        snapshot, replace(project, nodes=nodes), command.command_id, frozenset({node.id})
+    )
+
+
 def _history_unsupported(
     snapshot: DocumentSnapshot, command: Undo | Redo
 ) -> CommandResult:
@@ -953,6 +1194,14 @@ class Reducer:
             return _apply_rename(snapshot, command)
         if isinstance(command, PasteNodes):
             return _apply_paste(snapshot, command)
+        if isinstance(command, SetScreen):
+            return _apply_set_screen(snapshot, command)
+        if isinstance(command, AddScreen):
+            return _apply_add_screen(snapshot, command)
+        if isinstance(command, DeleteScreen):
+            return _apply_delete_screen(snapshot, command)
+        if isinstance(command, SetAction):
+            return _apply_set_action(snapshot, command)
         if isinstance(command, (Undo, Redo)):
             return _history_unsupported(snapshot, command)
         return _reject(
