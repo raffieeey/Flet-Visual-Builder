@@ -97,10 +97,14 @@ def test_validation_rejects_initial_route_that_matches_nothing() -> None:
 def test_set_screen_renames_and_changes_route() -> None:
     result = apply(
         two_screen_project(),
-        SetScreen(command_id="c1", screen_id="settings", title="Settings", route="/prefs"),
+        SetScreen(
+            command_id="c1", screen_id="settings", title="Settings", route="/prefs"
+        ),
     )
     assert result.status is CommandStatus.COMMITTED
-    assert meta_for(result.snapshot.project, "settings") == ScreenMeta("Settings", "/prefs")
+    assert meta_for(result.snapshot.project, "settings") == ScreenMeta(
+        "Settings", "/prefs"
+    )
 
 
 def test_set_screen_cannot_steal_another_route() -> None:
@@ -163,7 +167,9 @@ def test_add_screen_rejects_a_route_already_in_use() -> None:
 
 
 def test_delete_screen_removes_the_subtree_and_keeps_the_rest() -> None:
-    result = apply(two_screen_project(), DeleteScreen(command_id="c1", screen_id="home"))
+    result = apply(
+        two_screen_project(), DeleteScreen(command_id="c1", screen_id="home")
+    )
     assert result.status is CommandStatus.COMMITTED
     project = result.snapshot.project
     assert project.root_ids == ("settings",)
@@ -289,7 +295,9 @@ def test_screens_and_actions_round_trip() -> None:
     loaded = repo.loads(payload)
     assert loaded.ok, loaded.diagnostics
     assert loaded.project.screens["home"] == ScreenMeta("Welcome", "/")
-    assert loaded.project.nodes["home_text"].actions["on_click"] == Navigate("/screen-2")
+    assert loaded.project.nodes["home_text"].actions["on_click"] == Navigate(
+        "/screen-2"
+    )
 
 
 def test_schema_v2_document_without_screens_still_loads() -> None:
@@ -305,3 +313,52 @@ def test_schema_v2_document_without_screens_still_loads() -> None:
 def test_route_must_start_with_a_slash() -> None:
     with pytest.raises(ValueError):
         Navigate("settings")
+
+
+# ── template DSL ──────────────────────────────────────────────────────
+def test_finish_flow_builds_a_valid_multi_screen_document() -> None:
+    from flet_visual_builder.services.templates.screen import Screen
+
+    screen = Screen()
+    screen.text("home_title", "Home")
+    screen.column("home", "home_title")
+    screen.text("settings_title", "Settings")
+    screen.column("settings", "settings_title")
+
+    document = screen.finish_flow(
+        "Flow",
+        [("home", "Home", "/"), ("settings", "Settings", "/settings")],
+    )
+
+    assert validate_project(document) == ()
+    assert document.initial_route == "/"
+    assert effective_routes(document) == {"/": "home", "/settings": "settings"}
+
+
+def test_finish_flow_rejects_duplicate_routes() -> None:
+    from flet_visual_builder.services.templates.screen import Screen
+
+    screen = Screen()
+    screen.column("a")
+    screen.column("b")
+    with pytest.raises(ValueError):
+        screen.finish_flow("Bad", [("a", "A", "/"), ("b", "B", "/")])
+
+
+def test_navigate_binds_an_action_that_validates_against_the_flow() -> None:
+    from flet_visual_builder.services.templates.screen import Screen
+
+    screen = Screen()
+    screen.text("home_title", "Home")
+    screen.button("next", "Next")
+    screen.column("home", "home_title", "next")
+    screen.text("settings_title", "Settings")
+    screen.column("settings", "settings_title")
+    screen.navigate("next", "on_click", "/settings")
+
+    document = screen.finish_flow(
+        "Flow",
+        [("home", "Home", "/"), ("settings", "Settings", "/settings")],
+    )
+    assert document.nodes["next"].actions["on_click"] == Navigate("/settings")
+    assert validate_project(document) == ()

@@ -21,7 +21,9 @@ def screen_entries(project: Project) -> tuple[tuple[NodeId, ScreenMeta], ...]:
     entries: list[tuple[NodeId, ScreenMeta]] = []
     for index, root_id in enumerate(project.root_ids):
         meta = project.screens.get(root_id)
-        entries.append((root_id, meta if meta is not None else default_screen_meta(index)))
+        entries.append(
+            (root_id, meta if meta is not None else default_screen_meta(index))
+        )
     return tuple(entries)
 
 

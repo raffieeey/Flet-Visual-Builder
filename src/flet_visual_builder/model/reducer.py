@@ -925,7 +925,6 @@ def _apply_paste(snapshot: DocumentSnapshot, command: PasteNodes) -> CommandResu
     return _commit(snapshot, new_project, command.command_id, frozenset(incoming))
 
 
-
 _ROUTE_MAX = 64
 
 
@@ -945,7 +944,9 @@ def _route_errors(
     if not route.strip() or any(ch.isspace() for ch in route):
         return (_error("screen.route", "Route must be a single path token"),)
     if len(route) > _ROUTE_MAX:
-        return (_error("screen.route", f"Route must be {_ROUTE_MAX} characters or fewer"),)
+        return (
+            _error("screen.route", f"Route must be {_ROUTE_MAX} characters or fewer"),
+        )
     for root_id, meta in screen_entries(project):
         if root_id != exclude and meta.route == route:
             return (
@@ -1094,18 +1095,14 @@ def _apply_delete_screen(
         for root_id, meta in screen_entries(project)
         if root_id != command.screen_id
     }
-    candidate = replace(
-        project, root_ids=roots, nodes=nodes, screens=screens
-    )
+    candidate = replace(project, root_ids=roots, nodes=nodes, screens=screens)
     initial = project.initial_route
     if removed_route is not None and initial == removed_route:
         initial = screen_entries(candidate)[0][1].route
     candidate = replace(candidate, initial_route=initial)
     if removed_route is not None:
         candidate = _strip_route_actions(candidate, {removed_route})
-    return _commit(
-        snapshot, candidate, command.command_id, frozenset(removed_nodes)
-    )
+    return _commit(snapshot, candidate, command.command_id, frozenset(removed_nodes))
 
 
 def _apply_set_action(snapshot: DocumentSnapshot, command: SetAction) -> CommandResult:
@@ -1151,7 +1148,10 @@ def _apply_set_action(snapshot: DocumentSnapshot, command: SetAction) -> Command
     nodes = dict(project.nodes)
     nodes[node.id] = replace(node, actions=actions)
     return _commit(
-        snapshot, replace(project, nodes=nodes), command.command_id, frozenset({node.id})
+        snapshot,
+        replace(project, nodes=nodes),
+        command.command_id,
+        frozenset({node.id}),
     )
 
 

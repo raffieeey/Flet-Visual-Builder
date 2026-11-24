@@ -355,7 +355,6 @@ def _validate_assets(assets: Mapping[str, Asset]) -> list[Diagnostic]:
     return errors
 
 
-
 def _validate_screens(project: Project) -> list[Diagnostic]:
     errors: list[Diagnostic] = []
     for screen_id in project.screens:

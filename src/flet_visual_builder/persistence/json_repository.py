@@ -404,7 +404,9 @@ class JsonRepository:
         if errors:
             return PersistenceResult(project=None, diagnostics=tuple(errors))
 
-        if data["schema_version"] not in (2, 3) or isinstance(data["schema_version"], bool):
+        if data["schema_version"] not in (2, 3) or isinstance(
+            data["schema_version"], bool
+        ):
             errors.append(
                 _error(
                     "schema.unsupported",

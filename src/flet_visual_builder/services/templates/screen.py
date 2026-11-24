@@ -11,7 +11,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 
-from flet_visual_builder.contracts import JsonValue, Node, Project
+from flet_visual_builder.contracts import (
+    JsonValue,
+    Navigate,
+    Node,
+    Project,
+    ScreenMeta,
+)
 
 #: Which slot receives children for a given widget type.
 DEFAULT_SLOT: dict[str, str] = {
@@ -263,6 +269,66 @@ class Screen:
             "ProgressBar",
             node_id,
             {"value": value, "color": color, "bgcolor": bgcolor},
+        )
+
+    # ── navigation ────────────────────────────────────────────────────
+    def navigate(self, node_id: str, event_name: str, route: str) -> str:
+        """Bind a click on ``node_id`` to a route in the finished app."""
+        from dataclasses import replace as _replace
+
+        node = self.nodes.get(node_id)
+        if node is None:
+            raise ValueError(f"navigate() on unknown node {node_id!r}")
+        actions = dict(node.actions)
+        actions[event_name] = Navigate(route)
+        self.nodes[node_id] = _replace(node, actions=actions)
+        return node_id
+
+    def finish_flow(
+        self,
+        name: str,
+        screens: list[tuple[str, str, str]],
+        *,
+        seed: str = "INDIGO",
+        bgcolor: str | None = None,
+    ) -> Project:
+        """Finish a multi-screen document.
+
+        ``screens`` is an ordered list of ``(root_node_id, title, route)``; the
+        first entry is the initial route unless ``initial_route`` is given.
+        """
+        if not screens:
+            raise ValueError("a flow needs at least one screen")
+        roots = tuple(root for root, _, _ in screens)
+        for root, title, route in screens:
+            if root not in self.nodes:
+                raise ValueError(f"screen root {root!r} is not part of this document")
+            if not title.strip():
+                raise ValueError(f"screen {root!r} needs a title")
+            if not route.startswith("/") or " " in route:
+                raise ValueError(f"screen {root!r} has an invalid route {route!r}")
+        if len({route for _, _, route in screens}) != len(screens):
+            raise ValueError("screen routes must be unique")
+        page: dict[str, JsonValue] = {
+            "title": name,
+            "padding": 0,
+            "scroll": "none",
+            "theme_mode": "LIGHT",
+            "theme": {"color_scheme_seed": seed},
+        }
+        if bgcolor:
+            page["bgcolor"] = bgcolor
+        return Project(
+            name=name,
+            page=page,
+            root_ids=roots,
+            nodes=self.nodes,
+            assets={},
+            screens={
+                root: ScreenMeta(title=title.strip(), route=route)
+                for root, title, route in screens
+            },
+            initial_route=screens[0][2],
         )
 
     # ── document ──────────────────────────────────────────────────────

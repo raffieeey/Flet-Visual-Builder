@@ -606,7 +606,9 @@ class Workspace:
         self.editor.selection = screen_id
         self.refresh(Refresh.ALL)
 
-    def add_screen(self, title: str | None = None, route: str | None = None) -> CommandResult:
+    def add_screen(
+        self, title: str | None = None, route: str | None = None
+    ) -> CommandResult:
         index = len(self.project.root_ids)
         node = self.new_node("Column")
         result = self.dispatch(
