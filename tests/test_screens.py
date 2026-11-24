@@ -362,3 +362,54 @@ def test_navigate_binds_an_action_that_validates_against_the_flow() -> None:
     )
     assert document.nodes["next"].actions["on_click"] == Navigate("/settings")
     assert validate_project(document) == ()
+
+
+def test_renaming_a_route_retargets_navigation_actions() -> None:
+    project = two_screen_project()
+    project = apply(
+        project,
+        SetAction(
+            command_id="c1",
+            node_id="home_text",
+            event_name="on_click",
+            action=Navigate("/screen-2"),
+        ),
+    ).snapshot.project
+
+    renamed = apply(
+        project,
+        SetScreen(
+            command_id="c2", screen_id="settings", title="Settings", route="/prefs"
+        ),
+    )
+    assert renamed.status is CommandStatus.COMMITTED, renamed.diagnostics
+    assert renamed.snapshot.project.nodes["home_text"].actions["on_click"] == Navigate(
+        "/prefs"
+    )
+    assert validate_project(renamed.snapshot.project) == ()
+
+
+def test_validation_rejects_an_action_pointing_at_a_missing_route() -> None:
+    from dataclasses import replace
+
+    project = two_screen_project()
+    with_action = apply(
+        project,
+        SetAction(
+            command_id="c1",
+            node_id="home_text",
+            event_name="on_click",
+            action=Navigate("/screen-2"),
+        ),
+    ).snapshot.project
+    broken = replace(
+        with_action,
+        nodes={
+            **with_action.nodes,
+            "home_text": replace(
+                with_action.nodes["home_text"],
+                actions={"on_click": Navigate("/gone")},
+            ),
+        },
+    )
+    assert "action.route" in {d.code for d in validate_project(broken)}

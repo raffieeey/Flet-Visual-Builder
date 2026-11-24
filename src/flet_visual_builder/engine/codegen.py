@@ -14,6 +14,7 @@ from __future__ import annotations
 import ast
 import keyword
 import math
+import re
 from collections.abc import Mapping, Sequence
 
 from flet_visual_builder.catalogue import catalogue
@@ -34,6 +35,7 @@ from flet_visual_builder.contracts import (
     GeneratedArtifact,
     LiteralValue,
     MappingValue,
+    Navigate,
     NodeId,
     NodePlan,
     SequenceValue,
@@ -300,6 +302,35 @@ def _validate_request(
         )
     diags.extend(_validate_page(plan))
     diags.extend(_validate_graph(plan))
+    if plan.screens:
+        routes: set[str] = set()
+        for screen in plan.screens:
+            if screen.root_id not in plan.root_ids or screen.root_id not in plan.nodes:
+                diags.append(
+                    _error(
+                        CODE_UNKNOWN_NODE,
+                        f"unknown screen root {screen.root_id!r}",
+                        path=("screens", screen.root_id),
+                        node_id=screen.root_id,
+                    )
+                )
+            if screen.route in routes:
+                diags.append(
+                    _error(
+                        CODE_DUPLICATE,
+                        f"duplicate screen route {screen.route!r}",
+                        path=("screens", screen.root_id),
+                    )
+                )
+            routes.add(screen.route)
+        if plan.initial_route not in routes:
+            diags.append(
+                _error(
+                    CODE_UNKNOWN_NODE,
+                    "initial route is not a screen",
+                    path=("initial_route",),
+                )
+            )
     return tuple(diags)
 
 
@@ -454,6 +485,28 @@ def _validate_node(plan: ControlPlan, node: NodePlan) -> list[Diagnostic]:
                     node_id=node.node_id,
                 )
             )
+    if node.actions:
+        for name, action in node.actions.items():
+            if name not in spec.events:
+                diags.append(
+                    _error(
+                        CODE_UNKNOWN_EVENT,
+                        f"unknown event {name!r} on {node.type_id}",
+                        path=path_base + ("actions", name),
+                        node_id=node.node_id,
+                    )
+                )
+            if not isinstance(action, Navigate) or action.route not in {
+                s.route for s in plan.screens
+            }:
+                diags.append(
+                    _error(
+                        CODE_UNSUPPORTED,
+                        "action target is not a screen",
+                        path=path_base + ("actions", name),
+                        node_id=node.node_id,
+                    )
+                )
     for name in sorted(node.events):
         if name not in spec.events:
             diags.append(
@@ -583,6 +636,8 @@ def _validate_expr(
 
 
 def _emit(plan: ControlPlan) -> str:
+    if plan.screens:
+        return _emit_screens(plan)
     events = _collect_events(plan)
     used_assets = _collect_assets(plan)
     lines: list[str] = [
@@ -611,6 +666,91 @@ def _emit(plan: ControlPlan) -> str:
     return "\n".join(lines)
 
 
+def _emit_screens(plan: ControlPlan) -> str:
+    events = _collect_events(plan)
+    names: list[str] = []
+    used: set[str] = set()
+    for index, screen in enumerate(plan.screens, 1):
+        slug = re.sub(r"[^a-z0-9]+", "_", screen.title.lower()).strip("_")
+        if not slug or slug[0].isdigit():
+            slug = f"screen_{index}"
+        name = f"build_{slug}"
+        base = name
+        suffix = 2
+        while name in used:
+            name = f"{base}_{suffix}"
+            suffix += 1
+        used.add(name)
+        names.append(name)
+
+    lines = [
+        f'"""Flet Visual Builder export. Target: {plan.target_flet}."""',
+        "",
+        "from collections.abc import Callable",
+        "",
+        "import flet as ft",
+        "",
+    ]
+    assets = _collect_assets(plan)
+    if assets:
+        lines.append("_ASSETS = {")
+        for asset_id in assets:
+            lines.append(
+                f"    {asset_id!r}: bytes.fromhex({plan.assets[asset_id].data.hex()!r}),"
+            )
+        lines.extend(["}", ""])
+    for symbol, type_id in events:
+        lines.extend(
+            [
+                f"def {symbol.name}(e: ft.Event[ft.{type_id}]) -> None:",
+                f"    {_STUB_COMMENT}",
+                "    pass",
+                "",
+            ]
+        )
+    for screen, name in zip(plan.screens, names):
+        lines.extend(
+            [
+                f"def {name}(page: ft.Page) -> ft.Control:",
+                f"    return {_render_node(plan, screen.root_id)}",
+                "",
+            ]
+        )
+    lines.append("SCREENS: dict[str, Callable[[ft.Page], ft.Control]] = {")
+    for screen, name in zip(plan.screens, names):
+        lines.append(f"    {screen.route!r}: {name},")
+    lines.extend(["}", "", "def main(page: ft.Page) -> None:"])
+    for name in _ordered_keys(plan.page_properties, tuple(PAGE_PROPERTIES)):
+        expr = plan.page_properties[name]
+        if (
+            isinstance(expr, LiteralValue)
+            and expr.value is None
+            and name not in {"bgcolor", "adaptive"}
+        ):
+            continue
+        lines.append(f"    page.{name} = {_render_expr(expr)}")
+    lines.extend(
+        [
+            "",
+            "    def route_change(e: ft.RouteChangeEvent | None = None) -> None:",
+            f"        requested = e.route if e is not None else {plan.initial_route!r}",
+            f"        route = requested if requested in SCREENS else {plan.initial_route!r}",
+            "        page.views.clear()",
+            "        page.views.append(ft.View(route=route, controls=[SCREENS[route](page)], padding=0))",
+            "        page.update()",
+            "",
+            "    page.on_route_change = route_change",
+            "    route_change()",
+            f"    page.run_task(page.push_route, {plan.initial_route!r})",
+            "",
+            'if __name__ == "__main__":',
+            "    ft.run(main)",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _collect_events(plan: ControlPlan) -> tuple[tuple[EventSymbol, str], ...]:
     collected: list[tuple[EventSymbol, str]] = []
     seen: set[str] = set()
@@ -619,6 +759,8 @@ def _collect_events(plan: ControlPlan) -> tuple[tuple[EventSymbol, str], ...]:
         node = plan.nodes[node_id]
         spec = catalogue.widget(node.type_id)
         for event_name in sorted(node.events):
+            if event_name in node.actions:
+                continue
             symbol = node.events[event_name]
             if symbol.name in seen:
                 continue
@@ -745,9 +887,15 @@ def _render_node(plan: ControlPlan, node_id: NodeId) -> str:
             rendered = ", ".join(_render_node(plan, child_id) for child_id in children)
             pieces.append(f"{slot_name}=[{rendered}]")
         emitted.add(slot_name)
-    for event_name in sorted(node.events):
-        symbol = node.events[event_name]
-        pieces.append(f"{event_name}={symbol.name}")
+    actions = node.actions
+    for event_name in sorted(set(node.events) | set(actions)):
+        if event_name in actions:
+            action = actions[event_name]
+            pieces.append(
+                f"{event_name}=lambda e, r={action.route!r}: page.run_task(page.push_route, r)"
+            )
+        else:
+            pieces.append(f"{event_name}={node.events[event_name].name}")
     ctor = _ft_attr(spec.constructor.path)
     if not pieces:
         return f"{ctor}()"

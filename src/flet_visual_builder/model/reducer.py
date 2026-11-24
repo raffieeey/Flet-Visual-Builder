@@ -983,6 +983,28 @@ def _strip_route_actions(project: Project, routes: set[str]) -> Project:
     return replace(project, nodes=nodes)
 
 
+def _retarget_actions(project: Project, old_route: str, new_route: str) -> Project:
+    """Follow a renamed route in every navigation action that pointed at it."""
+    if old_route == new_route:
+        return project
+    nodes = dict(project.nodes)
+    changed = False
+    for node_id, node in project.nodes.items():
+        stale = [
+            event
+            for event, action in node.actions.items()
+            if isinstance(action, Navigate) and action.route == old_route
+        ]
+        if not stale:
+            continue
+        actions = dict(node.actions)
+        for event in stale:
+            actions[event] = Navigate(new_route)
+        nodes[node_id] = replace(node, actions=actions)
+        changed = True
+    return replace(project, nodes=nodes) if changed else project
+
+
 def _apply_set_screen(snapshot: DocumentSnapshot, command: SetScreen) -> CommandResult:
     project = snapshot.project
     if command.screen_id not in project.root_ids:
@@ -1016,9 +1038,12 @@ def _apply_set_screen(snapshot: DocumentSnapshot, command: SetScreen) -> Command
         initial = meta.route
     if screens == dict(project.screens) and initial == project.initial_route:
         return _noop(snapshot, command.command_id)
+    updated = replace(project, screens=screens, initial_route=initial)
+    if previous is not None and previous != meta.route:
+        updated = _retarget_actions(updated, previous, meta.route)
     return _commit(
         snapshot,
-        replace(project, screens=screens, initial_route=initial),
+        updated,
         command.command_id,
         frozenset({command.screen_id}),
     )

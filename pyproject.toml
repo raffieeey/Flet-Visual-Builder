@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flet-visual-builder"
-version = "0.2.0"
+version = "0.3.0"
 description = "A visual drag-and-drop builder that turns Flet UI designs into clean, runnable Python."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -151,8 +151,18 @@ def _constructor_params(ctor: Callable[..., Any]) -> set[str] | None:
 class RuntimeRenderer:
     """PreviewRenderer: clean PageSpec projection, fresh instances, no chrome."""
 
-    def render_plan(self, plan: ControlPlan) -> RenderResult:
+    def render_plan(
+        self, plan: ControlPlan, root_id: str | None = None
+    ) -> RenderResult:
         try:
+            if root_id is not None and root_id not in plan.root_ids:
+                raise _RenderRefuse(
+                    _error(
+                        CODE_UNKNOWN_NODE,
+                        f"unknown screen root {root_id!r}",
+                        node_id=root_id,
+                    )
+                )
             by_node, diagnostics = self._build_tree(plan, include_children=True)
             if any(d.severity is Severity.ERROR for d in diagnostics):
                 return RenderResult(
@@ -162,7 +172,8 @@ class RuntimeRenderer:
                     by_node={},
                     diagnostics=tuple(diagnostics),
                 )
-            roots = [by_node[nid] for nid in plan.root_ids]
+            root_ids = plan.root_ids if root_id is None else (root_id,)
+            roots = [by_node[nid] for nid in root_ids]
             root = self._project_page(plan, roots)
             return RenderResult(
                 revision=plan.revision,

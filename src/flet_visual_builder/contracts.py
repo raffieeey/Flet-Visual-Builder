@@ -376,6 +376,7 @@ class NodePlan:
     properties: Mapping[str, ValueExpr]
     slots: Mapping[str, tuple[NodeId, ...]]
     events: Mapping[str, EventSymbol]
+    actions: Mapping[str, ActionADT] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)

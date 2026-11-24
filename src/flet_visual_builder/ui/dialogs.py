@@ -137,3 +137,81 @@ def shortcuts_dialog(on_close: Callable[[], object]) -> ft.AlertDialog:
         actions=[ft.TextButton("Close", on_click=lambda event: on_close())],
         actions_alignment=ft.MainAxisAlignment.END,
     )
+
+
+def screen_dialog(
+    *,
+    title: str,
+    route: str,
+    initial: bool,
+    on_save: Callable[[str, str, bool], object],
+    on_close: Callable[[], object],
+    existing_routes: tuple[str, ...] = (),
+    editing: bool = True,
+) -> ft.AlertDialog:
+    """Edit screen metadata; leave the dialog open on validation failure."""
+    title_field = ft.TextField(label="Title", value=title)
+    route_field = ft.TextField(label="Route", value=route)
+    initial_switch = ft.Switch(label="Make initial", value=initial, disabled=initial)
+    error = text("", color=T.danger, visible=False)
+
+    def save(event):
+        name = (title_field.value or "").strip()
+        path = route_field.value or ""
+        message = ""
+        if not name:
+            message = "Title is required."
+        elif not path.startswith("/") or any(ch.isspace() for ch in path):
+            message = "Route must start with / and contain no whitespace."
+        elif path in existing_routes:
+            message = "Route is already in use."
+        if not message:
+            result = on_save(name, path, bool(initial_switch.value))
+            if getattr(getattr(result, "status", None), "value", None) == "rejected":
+                message = (
+                    " · ".join(d.message for d in result.diagnostics)
+                    or "Could not save screen."
+                )
+            else:
+                on_close()
+                return
+        error.value = message
+        error.visible = True
+
+    return ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Edit screen" if editing else "Add screen"),
+        content=ft.Column(
+            controls=[title_field, route_field, initial_switch, error],
+            width=400,
+            tight=True,
+            spacing=MD,
+        ),
+        actions=[
+            ft.TextButton("Cancel", on_click=lambda event: on_close()),
+            ft.TextButton("Save", on_click=save),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+    )
+
+
+def delete_screen_dialog(
+    title: str, on_delete: Callable[[], object], on_close: Callable[[], object]
+) -> ft.AlertDialog:
+    """Confirm removal of a named screen and its contents."""
+
+    def confirm(event):
+        result = on_delete()
+        if getattr(getattr(result, "status", None), "value", None) != "rejected":
+            on_close()
+
+    return ft.AlertDialog(
+        modal=True,
+        title=ft.Text(f"Delete {title}?"),
+        content=muted("This screen and all its contents will be removed."),
+        actions=[
+            ft.TextButton("Cancel", on_click=lambda event: on_close()),
+            ft.TextButton("Delete", on_click=confirm),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+    )

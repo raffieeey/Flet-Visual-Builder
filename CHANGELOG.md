@@ -3,6 +3,32 @@
 All notable changes to this project. The format follows Keep a Changelog, and versions use
 semantic versioning.
 
+## 0.3.0
+
+Multi-screen apps with working navigation.
+
+### Added
+
+- **Screens with routes.** A document holds several screens, each with a title, a unique route
+  and an initial route. The screen strip above the canvas switches between them; add, rename,
+  re-route, promote to initial and delete are all undoable commands.
+- **Navigation actions.** Any click event can be bound to a screen instead of a Python stub;
+  the reducer validates the target, follows route renames, and strips bindings when a screen is
+  deleted.
+- **Exported router.** Code generation emits one builder per screen plus a `SCREENS` table and
+  `ft.View`/`page.on_route_change` router, so navigation works in the exported app without
+  hand-written plumbing. (Flet 1.0.1 has no `page.go`; the export uses `page.push_route`.)
+- **A three-screen Flow template** — home, review queue and settings, wired together — and a
+  per-screen preview.
+- Schema v3 with screen metadata and node actions; v2 documents still load, with screen
+  titles and routes derived from root order.
+
+### Fixed
+
+- The catalogue's `Container` now exposes its real `on_click` event, so clickable cards can be
+  built and exported.
+- Renaming a screen route rewrites navigation actions that pointed at the old route.
+
 ## 0.2.0
 
 The first release that is a usable editor rather than a prototype.

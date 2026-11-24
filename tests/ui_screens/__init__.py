@@ -1,0 +1,1 @@
+"""Screen management UI tests."""

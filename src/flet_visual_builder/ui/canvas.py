@@ -8,7 +8,8 @@ from flet_visual_builder.app_context import DEVICE_LABELS, Refresh
 from flet_visual_builder.contracts import Severity
 from flet_visual_builder.ui.node_frame import NodeFrame, _update
 from flet_visual_builder.ui.panel import BasePanel
-from flet_visual_builder.ui.theme import LG, T, empty_state, faint
+from flet_visual_builder.ui.screens import ScreenStrip, active_screen_plan
+from flet_visual_builder.ui.theme import LG, R_LG, T, empty_state, faint
 
 
 class Canvas(BasePanel):
@@ -20,6 +21,7 @@ class Canvas(BasePanel):
         self.frames: dict[str, NodeFrame] = {}
         self._selection = None
         self._drop_frame: NodeFrame | None = None
+        self.screen_strip = ScreenStrip(workspace)
         super().__init__(workspace)
 
     def refresh(self, reason: str) -> None:
@@ -53,28 +55,38 @@ class Canvas(BasePanel):
         first = next((d for d in diagnostics if d.severity == Severity.ERROR), None)
         return f"{first.code}: {first.message}" if first else fallback
 
+    def _unavailable(self, title, detail):
+        return ft.Column(
+            controls=[
+                self.screen_strip.control,
+                empty_state(ft.Icons.ERROR_OUTLINE, title, detail),
+            ],
+            spacing=0,
+            expand=True,
+        )
+
     def build(self) -> ft.Control:
         self.frames = {}
         self._drop_frame = None
         self._selection = self.ws.editor.selection
         ws = self.ws
+        self.screen_strip.refresh()
         plan = ws.plan()
         if plan is None:
-            return empty_state(
-                ft.Icons.ERROR_OUTLINE,
+            return self._unavailable(
                 "This document cannot be rendered",
                 self._diagnostic(ws.diagnostics(), "The document is empty or invalid."),
             )
         if not plan.root_ids:
-            return empty_state(
-                ft.Icons.ERROR_OUTLINE,
+            return self._unavailable(
                 "No root control",
                 self._diagnostic(ws.diagnostics(), "Add a root control to begin."),
             )
+        active = ws.active_screen()
+        plan = active_screen_plan(plan, active)
         rendered = ws.renderer.render_plan(plan)
         if rendered.root is None:
-            return empty_state(
-                ft.Icons.ERROR_OUTLINE,
+            return self._unavailable(
                 "Preview unavailable",
                 self._diagnostic(
                     rendered.diagnostics, "The document could not be rendered."
@@ -110,20 +122,23 @@ class Canvas(BasePanel):
             expand=width is None,
             bgcolor=T.panel,
             border=ft.Border.all(1, T.border),
-            border_radius=12,
+            border_radius=R_LG,
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             shadow=ft.BoxShadow(
                 blur_radius=32, spread_radius=0, color=T.shadow, offset=ft.Offset(0, 10)
             ),
         )
+        strip = self.screen_strip.control
+        strip.expand = True
         return ft.Column(
             controls=[
                 ft.Row(
                     controls=[
-                        faint("Design", size=11),
-                        ft.Container(expand=True),
+                        strip,
                         faint(DEVICE_LABELS.get(ws.device, "Fill"), size=11),
-                    ]
+                    ],
+                    spacing=8,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 ft.Container(
                     content=device,

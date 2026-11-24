@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from typing import Final
 
 from flet_visual_builder.contracts import (
+    Navigate,
     Asset,
     Diagnostic,
     Node,
@@ -409,11 +410,29 @@ def _validate_screens(project: Project) -> list[Diagnostic]:
     return errors
 
 
+def _validate_actions(project: Project) -> list[Diagnostic]:
+    routes = {meta.route for _, meta in screen_entries(project)}
+    errors: list[Diagnostic] = []
+    for node_id, node in project.nodes.items():
+        for event_name, action in node.actions.items():
+            if isinstance(action, Navigate) and action.route not in routes:
+                errors.append(
+                    _error(
+                        "action.route",
+                        f"Action on {event_name!r} targets unknown route {action.route!r}",
+                        path=("nodes", node_id, "actions", event_name),
+                        node_id=node_id,
+                    )
+                )
+    return errors
+
+
 def validate_project(project: Project) -> tuple[Diagnostic, ...]:
     """Return ERROR diagnostics for every violated §2.3.4 invariant."""
     errors: list[Diagnostic] = []
     errors.extend(_validate_versions(project))
     errors.extend(_validate_screens(project))
+    errors.extend(_validate_actions(project))
     errors.extend(_validate_assets(project.assets))
 
     nodes = project.nodes

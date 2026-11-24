@@ -55,6 +55,29 @@ reads state from it, calls its command helpers, and implements `refresh(reason)`
 - **Safety.** Generated code is produced from allowlisted symbols and validated as text
   (AST + `py_compile`). The editor never executes user documents.
 
+## Screens and navigation
+
+A document is multi-screen: every entry in `root_ids` is a screen, and `Project.screens` maps
+that root to a `ScreenMeta(title, route)`. Documents written before screens existed have no
+metadata, so `model/screens.py` derives stable defaults (`Home` at `/`, then `/screen-N`).
+
+Navigation is data, not code:
+
+```json
+"nodes": {
+  "cta": {
+    "id": "cta", "type_id": "Button", "props": {"content": "Review queue"},
+    "slots": {}, "events": {},
+    "actions": {"on_click": {"type": "navigate", "route": "/reviews"}}
+  }
+}
+```
+
+The reducer validates that the route exists, retargets actions when a route is renamed, and
+strips them when a screen is deleted. Codegen turns the plan into one builder per screen plus a
+route table and a `ft.View` router; Flet 1.0.1 has no `page.go`, so navigation is emitted as
+`page.run_task(page.push_route, route)`.
+
 ## Invariants
 
 Enforced by `model/validation.py` on every commit:
@@ -65,6 +88,8 @@ Enforced by `model/validation.py` on every commit:
 - depth and node-count limits hold
 - property values validate against their codec
 - event symbols follow `handle_<node>_<event>`
+- screen routes are unique, start with `/`, and `initial_route` matches one of them
+- every navigation action targets a route that still exists
 
 ## Extension points
 

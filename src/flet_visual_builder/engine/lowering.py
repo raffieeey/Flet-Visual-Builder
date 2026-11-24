@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterator, Mapping
+from dataclasses import dataclass, field
 from typing import Any
 
 from flet_visual_builder.catalogue.enum_manifest import (
@@ -20,6 +21,7 @@ from flet_visual_builder.catalogue.enum_manifest import (
 from flet_visual_builder.catalogue.widgets import WIDGET_ORDER
 from flet_visual_builder.contracts import (
     AssetValue,
+    ActionADT,
     CallValue,
     Catalogue,
     ControlPlan,
@@ -31,13 +33,16 @@ from flet_visual_builder.contracts import (
     Node,
     NodeId,
     NodePlan,
+    PlannedScreen,
     Project,
     SequenceValue,
     Severity,
     SymbolRef,
     ValueExpr,
 )
+from flet_visual_builder.model.screens import screen_entries
 from flet_visual_builder.model.validation import validate_project
+
 
 CODE_SYMBOL_NOT_ALLOWLISTED = "ENGINE_SYMBOL_NOT_ALLOWLISTED"
 CODE_ASSET_MISSING = "ENGINE_ASSET_MISSING"
@@ -134,6 +139,10 @@ def document_sha256(project: Project) -> str:
             "props": _to_jsonable(dict(node.props)),
             "slots": {slot: list(ids) for slot, ids in node.slots.items()},
             "events": {event: symbol.name for event, symbol in node.events.items()},
+            "actions": {
+                event: {"type": "navigate", "route": action.route}
+                for event, action in node.actions.items()
+            },
         }
     assets = {
         str(key): {
@@ -149,6 +158,11 @@ def document_sha256(project: Project) -> str:
         "root_ids": list(project.root_ids),
         "nodes": nodes,
         "assets": assets,
+        "screens": {
+            root_id: {"title": meta.title, "route": meta.route}
+            for root_id, meta in project.screens.items()
+        },
+        "initial_route": project.initial_route,
         "schema_version": project.schema_version,
         "catalogue_version": project.catalogue_version,
         "target_flet": project.target_flet,
@@ -461,7 +475,23 @@ class Lowering:
                 properties=properties,
                 slots={slot: tuple(ids) for slot, ids in node.slots.items()},
                 events=dict(node.events),
+                actions=dict(node.actions),
             )
+
+        screens = tuple(
+            PlannedScreen(root_id, meta.title, meta.route)
+            for root_id, meta in screen_entries(project)
+        )
+        for screen in screens:
+            if screen.root_id not in nodes:
+                diagnostics.append(
+                    _error(
+                        "ENGINE_UNKNOWN_SCREEN_ROOT",
+                        f"screen root {screen.root_id!r} is not in the plan",
+                        path=("screens", screen.root_id),
+                        node_id=screen.root_id,
+                    )
+                )
 
         if _has_error(diagnostics):
             return LoweringResult(plan=None, diagnostics=tuple(diagnostics))
@@ -475,6 +505,8 @@ class Lowering:
             root_ids=tuple(project.root_ids),
             nodes=nodes,
             assets=dict(project.assets),
+            screens=screens,
+            initial_route=project.initial_route,
         )
         return LoweringResult(plan=plan, diagnostics=tuple(diagnostics))
 

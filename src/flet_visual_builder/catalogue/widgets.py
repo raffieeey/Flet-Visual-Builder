@@ -189,6 +189,8 @@ WIDGET_SPECS: dict[str, WidgetSpec] = {
             _p("border", "border", U, nullable=True),
         ),
         slots={"content": _CONTENT_SLOT},
+        # Flet's Container really does accept a click handler; clickable cards are common.
+        events=frozenset({"on_click"}),
     ),
     "Column": _widget(
         "Column",

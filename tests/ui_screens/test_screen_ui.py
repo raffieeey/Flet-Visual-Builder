@@ -1,11 +1,10 @@
 from types import SimpleNamespace
-from dataclasses import replace
+from unittest.mock import patch
 
 import flet as ft
-import pytest
 
-from flet_visual_builder.app_context import Workspace, Refresh
-from flet_visual_builder.contracts import Navigate, Node, Project
+from flet_visual_builder.app_context import Workspace
+from flet_visual_builder.contracts import Navigate, Node, Project, SetAction
 from flet_visual_builder.ui.canvas import Canvas
 from flet_visual_builder.ui.inspector import Inspector
 from flet_visual_builder.ui.preview import Preview
@@ -13,7 +12,13 @@ from flet_visual_builder.ui.preview import Preview
 
 def workspace():
     def node(id, type_id, slots=None):
-        return Node(id=id, type_id=type_id, props={}, slots=slots or {}, events={})
+        return Node(
+            id=id,
+            type_id=type_id,
+            props={"content": "Open"} if type_id == "TextButton" else {},
+            slots=slots or {},
+            events={},
+        )
 
     project = Project(
         name="App",
@@ -21,7 +26,7 @@ def workspace():
         root_ids=("home", "settings"),
         nodes={
             "home": node("home", "Column", {"controls": ("home_text",)}),
-            "home_text": node("home_text", "Text"),
+            "home_text": node("home_text", "TextButton"),
             "settings": node("settings", "Column", {"controls": ("settings_text",)}),
             "settings_text": node("settings_text", "Text"),
         },
@@ -88,11 +93,17 @@ def test_inspector_navigation_dispatches_and_displaces_handler():
         for c in walk(inspector.control)
         if isinstance(c, ft.Dropdown) and c.label == "Navigation"
     ]
-    assert len(dropdowns) == len(ws.spec("Text").events)
+    assert len(dropdowns) == len(ws.spec("TextButton").events)
     dropdown = next(c for c in dropdowns if c.data == ("navigation", "on_click"))
     assert {o.key for o in dropdown.options} == {"", "/", "/screen-2"}
     dropdown.value = "/screen-2"
-    dropdown.on_select(event(dropdown))
+    with patch.object(ws, "dispatch", wraps=ws.dispatch) as dispatch:
+        dropdown.on_select(event(dropdown))
+    commands = [call.args[0] for call in dispatch.call_args_list]
+    assert any(
+        isinstance(command, SetAction) and command.action == Navigate("/screen-2")
+        for command in commands
+    )
     assert ws.node("home_text").actions["on_click"] == Navigate("/screen-2")
     assert "on_click" not in ws.node("home_text").events
     assert any(

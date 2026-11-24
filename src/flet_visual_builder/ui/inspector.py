@@ -144,13 +144,26 @@ class Inspector(BasePanel):
             node = self.ws.node(self._node_id)
             for name, label in self._event_labels.items():
                 symbol = node.events.get(name) if node else None
-                label.value = symbol.name if symbol else "Not bound"
+                action = node.actions.get(name) if node else None
+                label.value = (
+                    f"Navigation: {action.route}"
+                    if action
+                    else (symbol.name if symbol else "Not bound")
+                )
+                switch, dropdown = self._event_controls[name]
+                switch.value = bool(symbol) and not bool(action)
+                dropdown.options = [ft.DropdownOption(key="", text="None")] + [
+                    ft.DropdownOption(key=route, text=route)
+                    for route in self.ws.routes()
+                ]
+                dropdown.value = action.route if action else ""
 
     def build(self) -> ft.Control:
         node = self.ws.selected_node()
         self._node_id = node.id if node else None
         self._rows = {}
         self._event_labels = {}
+        self._event_controls = {}
         if node:
             specs = self.ws.spec(node.type_id).properties
             props = node.props
@@ -199,31 +212,57 @@ class Inspector(BasePanel):
             events = []
             for event_name in sorted(self.ws.spec(node.type_id).events):
                 symbol = node.events.get(event_name)
-                symbol_label = faint(symbol.name if symbol else "Not bound")
+                action = node.actions.get(event_name)
+                symbol_label = faint(
+                    f"Navigation: {action.route}"
+                    if action
+                    else (symbol.name if symbol else "Not bound")
+                )
                 self._event_labels[event_name] = symbol_label
 
-                def toggle(
-                    e, event_name=event_name, node_id=node.id, label=symbol_label
-                ):
-                    result = self.ws.set_event(node_id, event_name, e.control.value)
-                    actual = self.ws.node(node_id).events.get(event_name)
-                    if result.status.value == "rejected":
-                        e.control.value = bool(actual)
-                    label.value = actual.name if actual else "Not bound"
+                def toggle(e, event_name=event_name, node_id=node.id):
+                    enabled = e.control.value
+                    result = self.ws.set_event(node_id, event_name, enabled)
+                    current = self.ws.node(node_id)
+                    if (
+                        result.status.value != "rejected"
+                        and enabled
+                        and current.actions.get(event_name)
+                    ):
+                        self.ws.set_action(node_id, event_name, None)
+                    self._refresh_labels()
 
+                def navigate(e, event_name=event_name, node_id=node.id):
+                    route = e.control.value or None
+                    result = self.ws.set_action(node_id, event_name, route)
+                    current = self.ws.node(node_id)
+                    if (
+                        result.status.value != "rejected"
+                        and route
+                        and current.events.get(event_name)
+                    ):
+                        self.ws.set_event(node_id, event_name, False)
+                    self._refresh_labels()
+
+                switch = ft.Switch(
+                    label=event_name,
+                    value=bool(symbol) and not bool(action),
+                    data=("event", event_name),
+                    on_change=toggle,
+                )
+                dropdown = ft.Dropdown(
+                    label="Navigation",
+                    value=action.route if action else "",
+                    data=("navigation", event_name),
+                    on_select=navigate,
+                    dense=True,
+                )
+                self._event_controls[event_name] = (switch, dropdown)
                 events.append(
                     ft.Column(
-                        controls=[
-                            ft.Switch(
-                                label=event_name,
-                                value=bool(symbol),
-                                data=("event", event_name),
-                                on_change=toggle,
-                            ),
-                            symbol_label,
-                        ],
+                        controls=[switch, dropdown, symbol_label],
                         tight=True,
-                        spacing=0,
+                        spacing=SM,
                     )
                 )
             sections.append(

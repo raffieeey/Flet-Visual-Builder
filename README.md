@@ -11,6 +11,9 @@ no runtime dependency on this project.
 
 ## What it does
 
+- **Multi-screen apps with working navigation.** A document holds several screens, each with
+  a title and route. Any click action can navigate to another screen, and the export ships a
+  real router (`ft.View` + `page.on_route_change`), so the buttons work in the exported app.
 - **Canvas with real controls.** The canvas renders the actual Flet controls, wrapped in
   selectable frames. Click to select, drag to reorder, drop from the palette to insert.
 - **43-widget catalogue.** Layout (`Column`, `Row`, `Container`, `Stack`, `GridView`,
@@ -79,8 +82,8 @@ mockups:
 | **Login** — brand panel and a focused sign-in form | **Dashboard** — KPI row, activity and a weekly goal |
 | ![Settings](docs/screenshots/template-settings.png) | ![Profile](docs/screenshots/template-profile.png) |
 | **Settings** — grouped account and notification rows | **Profile** — identity header and selected work |
-| ![Onboarding](docs/screenshots/template-onboarding.png) | |
-| **Onboarding** — progress, team details, clear actions | |
+| ![Onboarding](docs/screenshots/template-onboarding.png) | ![Flow](docs/screenshots/template-flow.png) |
+| **Onboarding** — progress, team details, clear actions | **Flow** — three screens wired together with navigation |
 
 ## What the export looks like
 
@@ -164,7 +167,7 @@ More detail in [docs/architecture.md](docs/architecture.md).
 ## Development
 
 ```bash
-python -m pytest -q          # 662 tests
+python -m pytest -q          # 701 tests
 python -m black --check src tests
 ```
 
@@ -179,7 +182,9 @@ path.
 
 ## Known limits
 
-- One page per document; there is no multi-route navigation editor yet.
+- No reusable components: every card is a copy, and editing ten copies means ten edits.
+- Click actions navigate between screens; there is no other behaviour (no state, no
+  conditionals, no data binding) — those stay in the exported Python.
 - Image sources are URLs or the built-in placeholder; binary asset import is not exposed in
   the UI even though the document model supports it.
 - Drop placement is a three-zone model (before / inside / after the hovered node) rather than

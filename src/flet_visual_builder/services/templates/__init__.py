@@ -12,6 +12,7 @@ from typing import Callable
 from flet_visual_builder.contracts import Project
 
 from flet_visual_builder.services.templates.dashboard import dashboard_project
+from flet_visual_builder.services.templates.flow import flow_project
 from flet_visual_builder.services.templates.login import login_project
 from flet_visual_builder.services.templates.onboarding import onboarding_project
 from flet_visual_builder.services.templates.profile import profile_project
@@ -59,6 +60,13 @@ TEMPLATES: tuple[Template, ...] = (
         profile_project,
     ),
     Template(
+        "flow",
+        "Flow",
+        "A three-screen app: home, review queue and settings, wired with navigation.",
+        "Application",
+        flow_project,
+    ),
+    Template(
         "onboarding",
         "Onboarding",
         "A guided workspace setup with progress.",
@@ -73,6 +81,7 @@ __all__ = [
     "TEMPLATES",
     "Template",
     "dashboard_project",
+    "flow_project",
     "login_project",
     "onboarding_project",
     "profile_project",

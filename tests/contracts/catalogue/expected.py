@@ -148,7 +148,7 @@ WIDGET_EVENTS: dict[str, frozenset[str]] = {
     "Switch": frozenset({"on_change"}),
     "Button": frozenset({"on_click"}),
     "IconButton": frozenset({"on_click"}),
-    "Container": frozenset(),
+    "Container": frozenset({"on_click"}),
     "Column": frozenset(),
     "Row": frozenset(),
     "Card": frozenset(),

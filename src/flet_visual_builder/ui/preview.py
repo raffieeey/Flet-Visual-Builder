@@ -6,6 +6,7 @@ import flet as ft
 
 from flet_visual_builder.app_context import DEVICE_LABELS, Refresh
 from flet_visual_builder.ui.panel import BasePanel
+from flet_visual_builder.ui.screens import active_screen_plan
 from flet_visual_builder.ui.theme import (
     LG,
     MD,
@@ -31,7 +32,9 @@ class Preview(BasePanel):
         detail = "No preview root was produced (no diagnostic available)."
         if plan is not None:
             try:
-                rendered = self.ws.renderer.render_plan(plan)
+                active = self.ws.active_screen()
+                active_plan = active_screen_plan(plan, active)
+                rendered = self.ws.renderer.render_plan(active_plan)
                 root = rendered.root
                 if root is None:
                     failure = rendered.diagnostics[0] if rendered.diagnostics else None
@@ -48,7 +51,9 @@ class Preview(BasePanel):
                 detail = f"{diagnostic.code}: {diagnostic.message}"
             root = empty_state(ft.Icons.ERROR_OUTLINE, "Preview unavailable", detail)
 
-        title = self.ws.project.page.get("title") or self.ws.project.name
+        meta = self.ws.screen_meta(self.ws.active_screen())
+        title = meta.title if meta else "Screen"
+        route = meta.route if meta else ""
         width = self.ws.device_width()
         toolbar = ft.Row(
             controls=[
@@ -59,6 +64,8 @@ class Preview(BasePanel):
                     max_lines=1,
                     overflow=ft.TextOverflow.ELLIPSIS,
                 ),
+                faint(route),
+                faint(str(self.ws.project.page.get("title") or self.ws.project.name)),
                 faint(DEVICE_LABELS.get(self.ws.device, self.ws.device)),
                 (
                     pill("Stale", color=T.danger, bgcolor=T.danger_soft)
