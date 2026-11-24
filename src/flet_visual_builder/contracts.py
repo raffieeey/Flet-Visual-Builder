@@ -379,6 +379,15 @@ class NodePlan:
 
 
 @dataclass(frozen=True, slots=True)
+class PlannedScreen:
+    """One exported screen: its root node, title and route."""
+
+    root_id: NodeId
+    title: str
+    route: str
+
+
+@dataclass(frozen=True, slots=True)
 class ControlPlan:
     revision: int
     document_sha256: str
@@ -388,6 +397,8 @@ class ControlPlan:
     root_ids: tuple[NodeId, ...]
     nodes: Mapping[NodeId, NodePlan]
     assets: Mapping[str, Asset]
+    screens: tuple[PlannedScreen, ...] = ()
+    initial_route: str = "/"
 
 
 @dataclass(frozen=True, slots=True)
